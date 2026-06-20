@@ -15,6 +15,8 @@ require('./models/associations')
 // Import routes
 const authRoutes = require('./routes/auth')
 const jobRoutes = require('./routes/jobs')
+const userRoutes = require('./routes/users')
+app.use('/users', userRoutes)
 
 // Register routes with a prefix
 // All auth routes start with /auth  (e.g. POST /auth/verify)
