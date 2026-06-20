@@ -40,5 +40,31 @@ router.put('/profile', auth, async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to update profile' })
   }
 })
+// GET /users/profile
+// Get technician's own profile with stats
+router.get('/profile', auth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified']
+    })
+
+    let techProfile = null
+    if (req.user.user_type === 'technician') {
+      techProfile = await TechnicianProfile.findOne({
+        where: { user_id: req.user.id }
+      })
+    }
+
+    res.json({
+      success: true,
+      user,
+      techProfile
+    })
+
+  } catch (error) {
+    console.log('Get profile error:', error)
+    res.status(500).json({ success: false, message: 'Failed to get profile' })
+  }
+})
 
 module.exports = router
