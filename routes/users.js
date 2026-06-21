@@ -7,18 +7,15 @@ const Job = require('../models/Job')
 const Review = require('../models/Review')
 
 // PUT /users/profile
-// Update name, city, and category after login
 router.put('/profile', auth, async (req, res) => {
   try {
     const { name, city, category } = req.body
 
-    // Update the user's name and city
     await User.update(
       { name, city },
       { where: { id: req.user.id } }
     )
 
-    // If technician, create or update their profile
     if (req.user.user_type === 'technician' && category) {
       const existing = await TechnicianProfile.findOne({
         where: { user_id: req.user.id }
@@ -42,8 +39,8 @@ router.put('/profile', auth, async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to update profile' })
   }
 })
+
 // GET /users/profile
-// Get technician's own profile with stats
 router.get('/profile', auth, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
@@ -57,11 +54,7 @@ router.get('/profile', auth, async (req, res) => {
       })
     }
 
-    res.json({
-      success: true,
-      user,
-      techProfile
-    })
+    res.json({ success: true, user, techProfile })
 
   } catch (error) {
     console.log('Get profile error:', error)
@@ -69,17 +62,11 @@ router.get('/profile', auth, async (req, res) => {
   }
 })
 
-// We need Job and Review models for this
-const Job = require('../models/Job')
-const Review = require('../models/Review')
-
 // POST /users/review
-// Homeowner submits a review for a completed job
 router.post('/review', auth, async (req, res) => {
   try {
     const { job_id, rating, comment, work_photo_url } = req.body
 
-    // Find the job to get the technician ID
     const job = await Job.findByPk(job_id)
 
     if (!job) {
@@ -92,7 +79,6 @@ router.post('/review', auth, async (req, res) => {
         success: false, message: 'Job must be completed first' })
     }
 
-    // Create the review
     const review = await Review.create({
       job_id,
       reviewer_id: req.user.id,
@@ -102,7 +88,6 @@ router.post('/review', auth, async (req, res) => {
       work_photo_url
     })
 
-    // Update technician's average rating
     const allReviews = await Review.findAll({
       where: { technician_id: job.technician_id }
     })
