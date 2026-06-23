@@ -28,10 +28,10 @@ router.post('/verify', async (req, res) => {
     if (!user) {
       // New user — create them in our database
       user = await User.create({
-        name,
+        name: name || 'User',
         phone,
         user_type,
-        city,
+        city: city || '',
         firebase_uid,
         is_verified: false
       })
@@ -45,10 +45,14 @@ router.post('/verify', async (req, res) => {
       { expiresIn: '30d' }                           // token expires in 30 days
     )
 
+    // Check if profile is complete (name is set and not default placeholder)
+    const isProfileComplete = user.name && user.name !== 'User' && user.city
+
     // Send back the token and user info to the app
     res.json({
       success: true,
       token,
+      is_profile_complete: !!isProfileComplete,
       user: {
         id: user.id,
         name: user.name,
