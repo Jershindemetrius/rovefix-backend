@@ -6,6 +6,7 @@ const Job = require('./Job')
 const TechnicianProfile = require('./TechnicianProfile')
 const Payment = require('./Payment')
 const Review = require('./Review')
+const Message = require('./Message')
 
 // A job belongs to a homeowner (who is a User)
 Job.belongsTo(User, { foreignKey: 'homeowner_id', as: 'homeowner' })
@@ -27,3 +28,12 @@ Payment.belongsTo(Job, { foreignKey: 'job_id' })
 // A job can have reviews
 Job.hasMany(Review, { foreignKey: 'job_id' })
 Review.belongsTo(Job, { foreignKey: 'job_id' })
+
+// A job has many chat messages
+Job.hasMany(Message, { foreignKey: 'job_id', as: 'messages' })
+Message.belongsTo(Job, { foreignKey: 'job_id' })
+
+// A message belongs to a sender (User)
+Message.belongsTo(User, { foreignKey: 'sender_id', as: 'sender' })
+
+module.exports = { User, Job, TechnicianProfile, Payment, Review, Message }

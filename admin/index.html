@@ -456,6 +456,11 @@
                         ${s.completedJobs}</div>
                     <div class="label">Completed</div>
                 </div>
+                <div class="stat-card">
+                    <div class="number" style="color:#34A853">
+                        ₹${Math.round(s.totalCommission)}</div>
+                    <div class="label">Total Revenue</div>
+                </div>
             `
             document.getElementById('headerStats').textContent =
                 `${s.totalUsers} users • ${s.totalJobs} jobs`

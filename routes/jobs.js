@@ -100,6 +100,23 @@ router.get('/my', auth, async (req, res) => {
   }
 })
 
+// GET /jobs/:id
+// Get a single job by ID
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id, {
+      include: [
+        { model: User, as: 'homeowner', attributes: ['name', 'city'] },
+        { model: User, as: 'technician', attributes: ['name', 'city'] }
+      ]
+    })
+    if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
+    res.json({ success: true, job })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 // PUT /jobs/:id/accept
 // Technician accepts an open job
 router.put('/:id/accept', auth, async (req, res) => {
@@ -114,11 +131,18 @@ router.put('/:id/accept', auth, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Job is no longer available' })
     }
 
+    // Calculate commission (10%)
+    const price = parseFloat(req.body.price)
+    const commission = price * 0.10
+    const payout = price - commission
+
     // Update the job — assign this technician and change status
     await job.update({
       technician_id: req.user.id,
       status: 'matched',
-      price: req.body.price   // technician sets the price when accepting
+      price: price,
+      commission_amount: commission,
+      technician_payout: payout
     })
 
     // Notify homeowner
@@ -162,6 +186,93 @@ router.put('/:id/complete', auth, async (req, res) => {
   } catch (error) {
     console.log('Complete job error:', error)
     res.status(500).json({ success: false, message: 'Failed to complete job' })
+  }
+})
+
+// PUT /jobs/:id/quote
+// Technician sends a new quote (after inspection)
+router.put('/:id/quote', auth, async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id)
+    if (!job || job.technician_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' })
+    }
+
+    await job.update({
+      quoted_price: req.body.price,
+      is_price_approved: false
+    })
+
+    // Notify homeowner
+    const homeowner = await User.findByPk(job.homeowner_id)
+    if (homeowner?.fcm_token) {
+      await sendNotification(
+        homeowner.fcm_token,
+        'New Price Quote 💰',
+        `Technician has quoted ₹${req.body.price} for the repair`,
+        { type: 'new_quote', job_id: job.id.toString() }
+      )
+    }
+
+    res.json({ success: true, message: 'Quote sent' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// PUT /jobs/:id/approve-quote
+// Homeowner approves the technician's quote
+router.put('/:id/approve-quote', auth, async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id)
+    if (!job || job.homeowner_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' })
+    }
+
+    const newPrice = job.quoted_price
+    const commission = newPrice * 0.10
+    const payout = newPrice - commission
+
+    await job.update({
+      price: newPrice,
+      commission_amount: commission,
+      technician_payout: payout,
+      is_price_approved: true,
+      status: 'in_progress'
+    })
+
+    // Notify technician
+    const tech = await User.findByPk(job.technician_id)
+    if (tech?.fcm_token) {
+      await sendNotification(
+        tech.fcm_token,
+        'Quote Approved! ✅',
+        'Customer approved your price. You can start the work.',
+        { type: 'quote_approved', job_id: job.id.toString() }
+      )
+    }
+
+    res.json({ success: true, message: 'Quote approved' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// PUT /jobs/:id/dispute
+// Homeowner or Technician marks a job as disputed
+router.put('/:id/dispute', auth, async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id)
+    if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
+
+    await job.update({
+      status: 'disputed',
+      dispute_reason: req.body.reason
+    })
+
+    res.json({ success: true, message: 'Dispute registered' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
   }
 })
 

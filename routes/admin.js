@@ -27,6 +27,9 @@ router.get('/dashboard', adminAuth, async (req, res) => {
     const completedJobs = await Job.count({
       where: { status: 'done' }
     })
+    const totalCommission = await Job.sum('commission_amount', {
+      where: { status: 'done' }
+    }) || 0
 
     res.json({
       success: true,
@@ -36,7 +39,8 @@ router.get('/dashboard', adminAuth, async (req, res) => {
         pendingApprovals,
         totalJobs,
         activeJobs,
-        completedJobs
+        completedJobs,
+        totalCommission
       }
     })
   } catch (error) {

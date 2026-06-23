@@ -19,6 +19,7 @@ const jobRoutes = require('./routes/jobs')
 const userRoutes = require('./routes/users')
 const paymentRoutes = require('./routes/payments')
 const adminRoutes = require('./routes/admin')
+const chatRoutes = require('./routes/chats')
 
 // Register routes with a prefix
 app.use('/auth', authRoutes)
@@ -26,6 +27,7 @@ app.use('/jobs', jobRoutes)
 app.use('/users', userRoutes)
 app.use('/payments', paymentRoutes)
 app.use('/admin', adminRoutes)
+app.use('/chats', chatRoutes)
 
 // Serve admin panel
 app.get('/admin-panel', (req, res) => {

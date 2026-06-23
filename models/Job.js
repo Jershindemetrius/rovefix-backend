@@ -60,6 +60,31 @@ const Job = sequelize.define('Job', {
   price: {
     type: DataTypes.DECIMAL(10, 2),  // stores money values like 499.00
     allowNull: true                   // set by technician when they accept
+  },
+
+  commission_amount: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+
+  technician_payout: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
+
+  quoted_price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+
+  is_price_approved: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+
+  dispute_reason: {
+    type: DataTypes.TEXT,
+    allowNull: true
   }
 
 })
