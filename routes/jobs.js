@@ -6,6 +6,8 @@ const router = express.Router()
 const auth = require('../middleware/auth')  // protects routes — must be logged in
 const Job = require('../models/Job')
 const User = require('../models/User')
+const { sendNotification } = require('../utils/notifications')
+
 
 // POST /jobs
 // Homeowner posts a new repair job
@@ -25,6 +27,22 @@ router.post('/', auth, async (req, res) => {
       photo_url,
       status: 'open'
     })
+
+    // Notify technicians
+    const technicians = await User.findAll({
+      where: { user_type: 'technician' }
+    })
+
+    for (const tech of technicians) {
+      if (tech.fcm_token) {
+        await sendNotification(
+          tech.fcm_token,
+          'New Job Request 🔧',
+          `New ${category} job near you`,
+          { type: 'new_job', job_id: job.id.toString() }
+        )
+      }
+    }
 
     res.json({ success: true, job })
 
@@ -102,6 +120,17 @@ router.put('/:id/accept', auth, async (req, res) => {
       status: 'matched',
       price: req.body.price   // technician sets the price when accepting
     })
+
+    // Notify homeowner
+    const homeowner = await User.findByPk(job.homeowner_id)
+    if (homeowner?.fcm_token) {
+      await sendNotification(
+        homeowner.fcm_token,
+        'Technician Found! 🎉',
+        'A technician has accepted your repair request',
+        { type: 'job_accepted', job_id: job.id.toString() }
+      )
+    }
 
     res.json({ success: true, job })
 

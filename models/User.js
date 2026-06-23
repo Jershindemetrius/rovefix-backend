@@ -48,6 +48,10 @@ const User = sequelize.define('User', {
   city: {
     type: DataTypes.STRING,
     allowNull: true
+  },
+  fcm_token: {
+      type: DataTypes.STRING,
+      allowNull: true
   }
 
 })

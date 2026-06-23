@@ -111,5 +111,22 @@ router.post('/review', auth, async (req, res) => {
       success: false, message: 'Failed to submit review' })
   }
 })
+// POST /users/fcm-token
+// Save FCM token for push notifications
+router.post('/fcm-token', auth, async (req, res) => {
+  try {
+    const { fcm_token } = req.body
+
+    await User.update(
+      { fcm_token },
+      { where: { id: req.user.id } }
+    )
+
+    res.json({ success: true })
+  } catch (error) {
+    console.log('FCM token error:', error)
+    res.status(500).json({ success: false })
+  }
+})
 
 module.exports = router
