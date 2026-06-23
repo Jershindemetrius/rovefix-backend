@@ -6,17 +6,25 @@ const Payment = require('../models/Payment')
 const Job = require('../models/Job')
 const crypto = require('crypto')
 
-// Initialize Razorpay
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-})
+// Helper to get Razorpay instance
+// This prevents the server from crashing on startup if keys are missing
+const getRazorpay = () => {
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    throw new Error('Razorpay keys are missing in environment variables')
+  }
+  return new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+  })
+}
 
 // POST /payments/create-order
 // Creates a Razorpay order for a job
 router.post('/create-order', auth, async (req, res) => {
   try {
     const { job_id } = req.body
+
+    const razorpay = getRazorpay()
 
     // Get the job to find the price
     const job = await Job.findByPk(job_id)
@@ -79,9 +87,14 @@ router.post('/verify', auth, async (req, res) => {
     } = req.body
 
     // Verify signature to confirm payment is genuine
+    const secret = process.env.RAZORPAY_KEY_SECRET
+    if (!secret) {
+      throw new Error('RAZORPAY_KEY_SECRET is missing')
+    }
+
     const body = razorpay_order_id + '|' + razorpay_payment_id
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .createHmac('sha256', secret)
       .update(body.toString())
       .digest('hex')
 
