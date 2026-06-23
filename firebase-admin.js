@@ -9,7 +9,15 @@ let firebaseApp
 try {
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     // On Render — parse from environment variable
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+    try {
+      console.log('Found FIREBASE_SERVICE_ACCOUNT in env, parsing...')
+      const rawJson = process.env.FIREBASE_SERVICE_ACCOUNT.trim()
+      serviceAccount = JSON.parse(rawJson)
+      console.log('✅ Parsed project_id:', serviceAccount.project_id)
+    } catch (parseErr) {
+      console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT JSON:', parseErr.message)
+      throw parseErr
+    }
   } else {
     // Local — try to read from the file directly
     try {

@@ -59,8 +59,13 @@ router.post('/verify', async (req, res) => {
     })
 
   } catch (error) {
-    console.log('Auth error:', error)
-    res.status(401).json({ success: false, message: 'Invalid token' })
+    console.error('Auth error detail:', error)
+    res.status(401).json({
+      success: false,
+      message: error.message || 'Verification failed',
+      code: error.code || 'no_code',
+      hint: 'Ensure your app and backend use the same Firebase project and the FIREBASE_SERVICE_ACCOUNT is correct on Render.'
+    })
   }
 })
 
