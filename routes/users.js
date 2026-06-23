@@ -9,10 +9,10 @@ const Review = require('../models/Review')
 // PUT /users/profile
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { name, city, category } = req.body
+    const { name, city, category, address } = req.body
 
     await User.update(
-      { name, city },
+      { name, city, address },
       { where: { id: req.user.id } }
     )
 
@@ -20,7 +20,6 @@ router.put('/profile', auth, async (req, res) => {
       const existing = await TechnicianProfile.findOne({
         where: { user_id: req.user.id }
       })
-
       if (existing) {
         await existing.update({ category })
       } else {
@@ -36,7 +35,8 @@ router.put('/profile', auth, async (req, res) => {
 
   } catch (error) {
     console.log('Update profile error:', error)
-    res.status(500).json({ success: false, message: 'Failed to update profile' })
+    res.status(500).json({
+      success: false, message: 'Failed to update profile' })
   }
 })
 
