@@ -1,8 +1,8 @@
 const express = require('express')
 const cors = require('cors')
+const path = require('path')
 require('dotenv').config()
-const paymentRoutes = require('./routes/payments')
-app.use('/payments', paymentRoutes)
+
 const app = express()
 app.use(cors())
 app.use(express.json())
@@ -17,13 +17,20 @@ require('./models/associations')
 const authRoutes = require('./routes/auth')
 const jobRoutes = require('./routes/jobs')
 const userRoutes = require('./routes/users')
-app.use('/users', userRoutes)
+const paymentRoutes = require('./routes/payments')
+const adminRoutes = require('./routes/admin')
 
 // Register routes with a prefix
-// All auth routes start with /auth  (e.g. POST /auth/verify)
-// All job routes start with /jobs   (e.g. POST /jobs, GET /jobs/open)
 app.use('/auth', authRoutes)
 app.use('/jobs', jobRoutes)
+app.use('/users', userRoutes)
+app.use('/payments', paymentRoutes)
+app.use('/admin', adminRoutes)
+
+// Serve admin panel
+app.get('/admin-panel', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin', 'index.html'))
+})
 
 // Test route
 app.get('/', (req, res) => {

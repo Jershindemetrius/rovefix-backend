@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rovefix Admin Panel</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont,
+            'Segoe UI', sans-serif; background: #F5F5F5; }
+
+        .header {
+            background: #1A73E8;
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 { font-size: 20px; font-weight: 700; }
+        .header span { font-size: 13px; opacity: 0.8; }
+
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #F5F5F5;
+        }
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 360px;
+            text-align: center;
+        }
+        .login-card h2 {
+            font-size: 24px;
+            color: #1A73E8;
+            margin-bottom: 8px;
+        }
+        .login-card p {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        .login-card input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #DDD;
+            border-radius: 8px;
+            font-size: 15px;
+            margin-bottom: 16px;
+            outline: none;
+        }
+        .login-card input:focus { border-color: #1A73E8; }
+
+        .nav {
+            background: white;
+            border-bottom: 1px solid #EEE;
+            display: flex;
+            gap: 0;
+        }
+        .nav-item {
+            padding: 14px 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 3px solid transparent;
+        }
+        .nav-item.active {
+            color: #1A73E8;
+            border-bottom-color: #1A73E8;
+        }
+        .nav-item:hover { background: #F8F9FA; }
+
+        .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1A73E8;
+        }
+        .stat-card .label {
+            font-size: 13px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 16px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #888;
+            border-bottom: 1px solid #EEE;
+        }
+        td {
+            padding: 14px 16px;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 1px solid #F5F5F5;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #FAFAFA; }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-green { background: #E8F5E9; color: #34A853; }
+        .badge-blue { background: #E8F0FE; color: #1A73E8; }
+        .badge-orange { background: #FFF3E0; color: #FB8C00; }
+        .badge-red { background: #FFEBEE; color: #E53935; }
+        .badge-gray { background: #F5F5F5; color: #888; }
+
+        .btn {
+            padding: 7px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 6px;
+        }
+        .btn-approve { background: #34A853; color: white; }
+        .btn-reject { background: #FFEBEE; color: #E53935; }
+        .btn-primary { background: #1A73E8; color: white; }
+        .btn-gray { background: #F5F5F5; color: #555; }
+        .btn:hover { opacity: 0.85; }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #AAAAAA;
+            font-size: 15px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .filter-btn {
+            padding: 6px 14px;
+            border: 1px solid #DDD;
+            border-radius: 20px;
+            background: white;
+            font-size: 13px;
+            cursor: pointer;
+            color: #555;
+        }
+        .filter-btn.active {
+            background: #1A73E8;
+            color: white;
+            border-color: #1A73E8;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- Login screen -->
+<div class="login-screen" id="loginScreen">
+    <div class="login-card">
+        <h2>🔧 Rovefix</h2>
+        <p>Admin Panel — Zanvis Technologies</p>
+        <input type="password" id="adminKeyInput"
+               placeholder="Enter admin key"
+               onkeypress="if(event.key==='Enter') login()"/>
+        <button class="btn btn-primary"
+                style="width:100%;padding:13px;font-size:15px"
+                onclick="login()">Login</button>
+        <p id="loginError"
+           style="color:#E53935;font-size:13px;margin-top:12px"></p>
+    </div>
+</div>
+
+<!-- Main panel -->
+<div id="mainPanel" class="hidden">
+
+    <div class="header">
+        <h1>🔧 Rovefix Admin</h1>
+        <span id="headerStats">Loading...</span>
+    </div>
+
+    <div class="nav">
+        <div class="nav-item active" onclick="showTab('dashboard')">
+            Dashboard</div>
+        <div class="nav-item" onclick="showTab('pending')">
+            Pending Approvals <span id="pendingBadge"></span></div>
+        <div class="nav-item" onclick="showTab('technicians')">
+            Technicians</div>
+        <div class="nav-item" onclick="showTab('jobs')">Jobs</div>
+        <div class="nav-item" onclick="showTab('users')">Users</div>
+    </div>
+
+    <div class="content">
+
+        <!-- Dashboard tab -->
+        <div id="tab-dashboard">
+            <div class="stats-grid" id="statsGrid">
+                <div class="loading">Loading stats...</div>
+            </div>
+        </div>
+
+        <!-- Pending approvals tab -->
+        <div id="tab-pending" class="hidden">
+            <p class="section-title">Pending Technician Approvals</p>
+            <div class="card">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>City</th>
+                        <th>Category</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="pendingTable">
+                    <tr><td colspan="6" class="loading">
+                        Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Technicians tab -->
+        <div id="tab-technicians" class="hidden">
+            <p class="section-title">All Technicians</p>
+            <div class="card">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>City</th>
+                        <th>Category</th>
+                        <th>Rating</th>
+                        <th>Jobs</th>
+                        <th>Status</th>
+                    </tr>
+                    </thead>
+                    <tbody id="techniciansTable">
+                    <tr><td colspan="7" class="loading">
+                        Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Jobs tab -->
+        <div id="tab-jobs" class="hidden">
+            <p class="section-title">All Jobs</p>
+            <div class="filter-row">
+                <button class="filter-btn active"
+                        onclick="filterJobs('all', this)">All</button>
+                <button class="filter-btn"
+                        onclick="filterJobs('open', this)">Open</button>
+                <button class="filter-btn"
+                        onclick="filterJobs('matched', this)">Matched</button>
+                <button class="filter-btn"
+                        onclick="filterJobs('in_progress', this)">
+                    In Progress</button>
+                <button class="filter-btn"
+                        onclick="filterJobs('done', this)">Done</button>
+                <button class="filter-btn"
+                        onclick="filterJobs('disputed', this)">Disputed</button>
+            </div>
+            <div class="card">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Location</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                    </thead>
+                    <tbody id="jobsTable">
+                    <tr><td colspan="6" class="loading">
+                        Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Users tab -->
+        <div id="tab-users" class="hidden">
+            <p class="section-title">All Users</p>
+            <div class="card">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>City</th>
+                        <th>Type</th>
+                        <th>Verified</th>
+                        <th>Joined</th>
+                    </tr>
+                    </thead>
+                    <tbody id="usersTable">
+                    <tr><td colspan="6" class="loading">
+                        Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const BASE_URL = 'https://rovefix-backend.onrender.com'
+    let adminKey = ''
+    let currentTab = 'dashboard'
+
+    function login() {
+        const key = document.getElementById('adminKeyInput').value
+        if (!key) return
+
+        fetch(`${BASE_URL}/admin/dashboard`, {
+            headers: { 'x-admin-key': key }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                adminKey = key
+                document.getElementById('loginScreen').classList.add('hidden')
+                document.getElementById('mainPanel').classList.remove('hidden')
+                loadDashboard()
+            } else {
+                document.getElementById('loginError').textContent =
+                    'Invalid admin key'
+            }
+        })
+        .catch(() => {
+            document.getElementById('loginError').textContent =
+                'Connection error'
+        })
+    }
+
+    function showTab(tab) {
+        // Hide all tabs
+        document.querySelectorAll('[id^="tab-"]').forEach(t => {
+            t.classList.add('hidden')
+        })
+        // Remove active from nav
+        document.querySelectorAll('.nav-item').forEach(n => {
+            n.classList.remove('active')
+        })
+        // Show selected tab
+        document.getElementById(`tab-${tab}`).classList.remove('hidden')
+        event.target.classList.add('active')
+        currentTab = tab
+
+        // Load data
+        if (tab === 'dashboard') loadDashboard()
+        else if (tab === 'pending') loadPending()
+        else if (tab === 'technicians') loadTechnicians()
+        else if (tab === 'jobs') loadJobs('all')
+        else if (tab === 'users') loadUsers()
+    }
+
+    function apiGet(endpoint) {
+        return fetch(`${BASE_URL}${endpoint}`, {
+            headers: { 'x-admin-key': adminKey }
+        }).then(r => r.json())
+    }
+
+    function apiPut(endpoint) {
+        return fetch(`${BASE_URL}${endpoint}`, {
+            method: 'PUT',
+            headers: { 'x-admin-key': adminKey }
+        }).then(r => r.json())
+    }
+
+    function loadDashboard() {
+        apiGet('/admin/dashboard').then(data => {
+            if (!data.success) return
+            const s = data.stats
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card">
+                    <div class="number">${s.totalUsers}</div>
+                    <div class="label">Homeowners</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${s.totalTechnicians}</div>
+                    <div class="label">Technicians</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" style="color:#FB8C00">
+                        ${s.pendingApprovals}</div>
+                    <div class="label">Pending Approvals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number">${s.totalJobs}</div>
+                    <div class="label">Total Jobs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" style="color:#34A853">
+                        ${s.activeJobs}</div>
+                    <div class="label">Active Jobs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" style="color:#888">
+                        ${s.completedJobs}</div>
+                    <div class="label">Completed</div>
+                </div>
+            `
+            document.getElementById('headerStats').textContent =
+                `${s.totalUsers} users • ${s.totalJobs} jobs`
+
+            if (s.pendingApprovals > 0) {
+                document.getElementById('pendingBadge').textContent =
+                    ` (${s.pendingApprovals})`
+                document.getElementById('pendingBadge').style.color = '#E53935'
+            }
+        })
+    }
+
+    function loadPending() {
+        apiGet('/admin/technicians/pending').then(data => {
+            if (!data.success) return
+            const tbody = document.getElementById('pendingTable')
+
+            if (data.technicians.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty">
+                    No pending approvals 🎉</td></tr>`
+                return
+            }
+
+            tbody.innerHTML = data.technicians.map(t => `
+                <tr>
+                    <td><strong>${t.user?.name || 'N/A'}</strong></td>
+                    <td>${t.user?.phone || 'N/A'}</td>
+                    <td>${t.user?.city || 'N/A'}</td>
+                    <td>${t.category}</td>
+                    <td>${new Date(t.user?.created_at)
+                        .toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn btn-approve"
+                            onclick="approveTechnician('${t.id}')">
+                            ✓ Approve</button>
+                        <button class="btn btn-reject"
+                            onclick="rejectTechnician('${t.id}')">
+                            ✗ Reject</button>
+                    </td>
+                </tr>
+            `).join('')
+        })
+    }
+
+    function approveTechnician(id) {
+        if (!confirm('Approve this technician?')) return
+        apiPut(`/admin/technicians/${id}/approve`).then(data => {
+            if (data.success) {
+                alert('Technician approved ✅')
+                loadPending()
+                loadDashboard()
+            }
+        })
+    }
+
+    function rejectTechnician(id) {
+        if (!confirm('Reject and remove this technician?')) return
+        apiPut(`/admin/technicians/${id}/reject`).then(data => {
+            if (data.success) {
+                alert('Technician rejected')
+                loadPending()
+            }
+        })
+    }
+
+    function loadTechnicians() {
+        apiGet('/admin/users').then(data => {
+            if (!data.success) return
+            const techs = data.users.filter(u => u.user_type === 'technician')
+            const tbody = document.getElementById('techniciansTable')
+
+            if (techs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="empty">
+                    No technicians yet</td></tr>`
+                return
+            }
+
+            tbody.innerHTML = techs.map(t => `
+                <tr>
+                    <td><strong>${t.name}</strong></td>
+                    <td>${t.phone}</td>
+                    <td>${t.city || 'N/A'}</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>${t.is_verified
+                        ? '<span class="badge badge-green">Verified</span>'
+                        : '<span class="badge badge-orange">Pending</span>'
+                    }</td>
+                </tr>
+            `).join('')
+        })
+    }
+
+    function loadJobs(status) {
+        const endpoint = status === 'all'
+            ? '/admin/jobs'
+            : `/admin/jobs?status=${status}`
+
+        apiGet(endpoint).then(data => {
+            if (!data.success) return
+            const tbody = document.getElementById('jobsTable')
+
+            if (data.jobs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty">
+                    No jobs found</td></tr>`
+                return
+            }
+
+            tbody.innerHTML = data.jobs.map(j => `
+                <tr>
+                    <td>${j.category}</td>
+                    <td>${j.description?.substring(0, 50)}...</td>
+                    <td>${j.location}</td>
+                    <td>${j.price ? '₹' + j.price : '—'}</td>
+                    <td>${statusBadge(j.status)}</td>
+                    <td>${new Date(j.createdAt).toLocaleDateString()}</td>
+                </tr>
+            `).join('')
+        })
+    }
+
+    function filterJobs(status, btn) {
+        document.querySelectorAll('.filter-btn').forEach(b => {
+            b.classList.remove('active')
+        })
+        btn.classList.add('active')
+        loadJobs(status)
+    }
+
+    function loadUsers() {
+        apiGet('/admin/users').then(data => {
+            if (!data.success) return
+            const tbody = document.getElementById('usersTable')
+
+            if (data.users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty">
+                    No users yet</td></tr>`
+                return
+            }
+
+            tbody.innerHTML = data.users.map(u => `
+                <tr>
+                    <td><strong>${u.name}</strong></td>
+                    <td>${u.phone}</td>
+                    <td>${u.city || 'N/A'}</td>
+                    <td>${u.user_type === 'homeowner'
+                        ? '<span class="badge badge-blue">Homeowner</span>'
+                        : '<span class="badge badge-green">Technician</span>'
+                    }</td>
+                    <td>${u.is_verified
+                        ? '<span class="badge badge-green">Yes</span>'
+                        : '<span class="badge badge-gray">No</span>'
+                    }</td>
+                    <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+                </tr>
+            `).join('')
+        })
+    }
+
+    function statusBadge(status) {
+        const map = {
+            open: 'badge-green',
+            matched: 'badge-blue',
+            in_progress: 'badge-orange',
+            done: 'badge-gray',
+            disputed: 'badge-red'
+        }
+        return `<span class="badge ${map[status] || 'badge-gray'}">
+            ${status}</span>`
+    }
+</script>
+
+</body>
+</html>

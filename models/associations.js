@@ -17,7 +17,7 @@ Job.belongsTo(User, { foreignKey: 'technician_id', as: 'technician' })
 User.hasMany(Job, { foreignKey: 'homeowner_id', as: 'posted_jobs' })
 
 // A technician profile belongs to a user
-TechnicianProfile.belongsTo(User, { foreignKey: 'user_id' })
+TechnicianProfile.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
 User.hasOne(TechnicianProfile, { foreignKey: 'user_id' })
 
 // A job has one payment
