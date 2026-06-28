@@ -56,6 +56,18 @@ const User = sequelize.define('User', {
   fcm_token: {
       type: DataTypes.STRING,
       allowNull: true
+  },
+  referral_code: {
+    type: DataTypes.STRING,
+    unique: true
+  },
+  referred_by: {
+    type: DataTypes.UUID,
+    allowNull: true
+  },
+  wallet_balance: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
   }
 
 })

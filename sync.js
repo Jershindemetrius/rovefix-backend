@@ -15,20 +15,21 @@ const Review = require('./models/Review')
 // Never use force: true in production — it deletes all your data
 async function syncDatabase() {
   try {
-    await User.sync({ force: false })
-    console.log('Users table ready ✅')
+    // alter: true will add missing columns without deleting data
+    await User.sync({ alter: true })
+    console.log('Users table updated ✅')
 
-    await TechnicianProfile.sync({ force: false })
-    console.log('TechnicianProfiles table ready ✅')
+    await TechnicianProfile.sync({ alter: true })
+    console.log('TechnicianProfiles table updated ✅')
 
-    await Job.sync({ force: false })
-    console.log('Jobs table ready ✅')
+    await Job.sync({ alter: true })
+    console.log('Jobs table updated ✅')
 
-    await Payment.sync({ force: false })
-    console.log('Payments table ready ✅')
+    await Payment.sync({ alter: true })
+    console.log('Payments table updated ✅')
 
-    await Review.sync({ force: false })
-    console.log('Reviews table ready ✅')
+    await Review.sync({ alter: true })
+    console.log('Reviews table updated ✅')
 
     console.log('All tables created successfully! 🎉')
     process.exit(0)  // exit after sync is done

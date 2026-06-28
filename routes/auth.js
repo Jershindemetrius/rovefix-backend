@@ -7,13 +7,14 @@ const router = express.Router()
 const jwt = require('jsonwebtoken')
 const firebaseAdmin = require('../firebase-admin') // we'll create this file next
 const User = require('../models/User')
+const { generateReferralCode } = require('../utils/referral')
 
 // POST /auth/verify
 // Called after user enters OTP successfully in the app
 // App sends the Firebase token, we verify it and return our own JWT
 router.post('/verify', async (req, res) => {
   try {
-    const { firebase_token, name, user_type, city } = req.body
+    const { firebase_token, name, user_type, city, referral_code_used } = req.body
     // firebase_token  — sent from the Android app after OTP success
     // name, user_type, city — basic info the user filled in
 
@@ -27,13 +28,28 @@ router.post('/verify', async (req, res) => {
 
     if (!user) {
       // New user — create them in our database
+
+      // Handle referral logic
+      let referredByUserId = null
+      if (referral_code_used) {
+        const referrer = await User.findOne({ where: { referral_code: referral_code_used.toUpperCase() } })
+        if (referrer) {
+          referredByUserId = referrer.id
+          // Reward referrer (₹100)
+          await referrer.increment('wallet_balance', { by: 100 })
+        }
+      }
+
       user = await User.create({
         name: name || 'User',
         phone,
         user_type,
         city: city || '',
         firebase_uid,
-        is_verified: false
+        is_verified: false,
+        referral_code: generateReferralCode(name || 'RV'),
+        referred_by: referredByUserId,
+        wallet_balance: referredByUserId ? 50 : 0 // New user gets ₹50 if referred
       })
     }
 
@@ -58,7 +74,9 @@ router.post('/verify', async (req, res) => {
         name: user.name,
         phone: user.phone,
         user_type: user.user_type,
-        city: user.city
+        city: user.city,
+        referral_code: user.referral_code,
+        wallet_balance: user.wallet_balance
       }
     })
 

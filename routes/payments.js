@@ -4,6 +4,7 @@ const auth = require('../middleware/auth')
 const Razorpay = require('razorpay')
 const Payment = require('../models/Payment')
 const Job = require('../models/Job')
+const User = require('../models/User')
 const crypto = require('crypto')
 
 // Helper to get Razorpay instance
@@ -38,24 +39,38 @@ router.post('/create-order', auth, async (req, res) => {
         success: false, message: 'Job has no price set' })
     }
 
+    // Get user wallet balance
+    const user = await User.findByPk(req.user.id)
+    const walletBalance = parseFloat(user.wallet_balance)
+
+    // Apply discount
+    let amountToPay = parseFloat(job.price)
+    let discountApplied = 0
+
+    if (walletBalance > 0) {
+      discountApplied = Math.min(amountToPay, walletBalance)
+      amountToPay -= discountApplied
+    }
+
     // Create Razorpay order
     // Amount must be in paise (1 rupee = 100 paise)
-    const amount = Math.round(parseFloat(job.price) * 100)
+    const amountInPaise = Math.round(amountToPay * 100)
 
     const order = await razorpay.orders.create({
-      amount,
+      amount: amountInPaise,
       currency: 'INR',
       receipt: `job_${job_id}`,
       notes: {
         job_id,
-        homeowner_id: req.user.id
+        homeowner_id: req.user.id,
+        discount_applied: discountApplied.toString()
       }
     })
 
     // Save payment record
     await Payment.create({
       job_id,
-      amount: job.price,
+      amount: amountToPay,
       razorpay_order_id: order.id,
       status: 'pending'
     })
@@ -65,7 +80,8 @@ router.post('/create-order', auth, async (req, res) => {
       order_id: order.id,
       amount: order.amount,
       currency: order.currency,
-      key_id: process.env.RAZORPAY_KEY_ID
+      key_id: process.env.RAZORPAY_KEY_ID,
+      discount_applied: discountApplied
     })
 
   } catch (error) {
@@ -86,6 +102,8 @@ router.post('/verify', auth, async (req, res) => {
       job_id
     } = req.body
 
+    const razorpay = getRazorpay()
+
     // Verify signature to confirm payment is genuine
     const secret = process.env.RAZORPAY_KEY_SECRET
     if (!secret) {
@@ -101,6 +119,16 @@ router.post('/verify', auth, async (req, res) => {
     if (expectedSignature !== razorpay_signature) {
       return res.status(400).json({
         success: false, message: 'Invalid payment signature' })
+    }
+
+    // Get order details to check for discount
+    const order = await razorpay.orders.fetch(razorpay_order_id)
+    const discountApplied = parseFloat(order.notes.discount_applied || '0')
+
+    if (discountApplied > 0) {
+      // Deduct from user wallet
+      const user = await User.findByPk(req.user.id)
+      await user.decrement('wallet_balance', { by: discountApplied })
     }
 
     // Update payment record
