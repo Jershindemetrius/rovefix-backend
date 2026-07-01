@@ -4,6 +4,7 @@ const auth = require('../middleware/auth')
 const Bid = require('../models/Bid')
 const Job = require('../models/Job')
 const User = require('../models/User')
+const TechnicianProfile = require('../models/TechnicianProfile')
 const { sendNotification } = require('../utils/notifications')
 
 // POST /bids/:job_id
@@ -12,6 +13,15 @@ router.post('/:job_id', auth, async (req, res) => {
   try {
     if (req.user.user_type !== 'technician') {
       return res.status(403).json({ success: false, message: 'Only technicians can bid' })
+    }
+
+    // Check if technician is approved
+    const techProfile = await TechnicianProfile.findOne({ where: { user_id: req.user.id } })
+    if (!techProfile || !techProfile.approved) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your profile is not yet approved by admin. Please complete your verification first.'
+      })
     }
 
     const { price, estimated_time, message } = req.body
@@ -63,7 +73,7 @@ router.get('/job/:job_id', auth, async (req, res) => {
       include: [{
         model: User,
         as: 'technician',
-        attributes: ['id', 'name', 'phone', 'city']
+        attributes: ['id', 'name', 'phone', 'city', 'is_verified']
       }],
       order: [['price', 'ASC']] // Show cheapest first
     })

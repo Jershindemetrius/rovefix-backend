@@ -6,6 +6,7 @@ const router = express.Router()
 const auth = require('../middleware/auth')  // protects routes — must be logged in
 const Job = require('../models/Job')
 const User = require('../models/User')
+const TechnicianProfile = require('../models/TechnicianProfile')
 const { sendNotification } = require('../utils/notifications')
 
 
@@ -107,7 +108,7 @@ router.get('/:id', auth, async (req, res) => {
     const job = await Job.findByPk(req.params.id, {
       include: [
         { model: User, as: 'homeowner', attributes: ['name', 'city'] },
-        { model: User, as: 'technician', attributes: ['name', 'city'] }
+        { model: User, as: 'technician', attributes: ['name', 'city', 'is_verified'] }
       ]
     })
     if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
@@ -121,6 +122,19 @@ router.get('/:id', auth, async (req, res) => {
 // Technician accepts an open job
 router.put('/:id/accept', auth, async (req, res) => {
   try {
+    if (req.user.user_type !== 'technician') {
+      return res.status(403).json({ success: false, message: 'Only technicians can accept jobs' })
+    }
+
+    // Check if technician is approved
+    const techProfile = await TechnicianProfile.findOne({ where: { user_id: req.user.id } })
+    if (!techProfile || !techProfile.approved) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your profile is not yet approved by admin. Please complete your verification first.'
+      })
+    }
+
     const job = await Job.findByPk(req.params.id)  // find job by ID from the URL
 
     if (!job) {
