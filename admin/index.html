@@ -3,634 +3,519 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rovefix Admin Panel</title>
+    <title>Rovefix | System Command</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        admin: {
+                            surface: '#0A0A0A',
+                            card: '#121212',
+                            accent: '#BB86FC',
+                            success: '#03DAC6',
+                            error: '#CF6679',
+                            muted: '#999999'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont,
-            'Segoe UI', sans-serif; background: #F5F5F5; }
-
-        .header {
-            background: #1A73E8;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0A0A0A; color: #FFFFFF; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #0A0A0A; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #444; }
+        input[type="password"], input[type="text"], input[type="number"] {
+            background: #1A1A1A;
+            border: 1px solid #333;
             color: white;
-            padding: 16px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .header h1 { font-size: 20px; font-weight: 700; }
-        .header span { font-size: 13px; opacity: 0.8; }
-
-        .login-screen {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: #F5F5F5;
-        }
-        .login-card {
-            background: white;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            width: 360px;
-            text-align: center;
-        }
-        .login-card h2 {
-            font-size: 24px;
-            color: #1A73E8;
-            margin-bottom: 8px;
-        }
-        .login-card p {
-            color: #888;
-            font-size: 14px;
-            margin-bottom: 24px;
-        }
-        .login-card input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid #DDD;
-            border-radius: 8px;
-            font-size: 15px;
-            margin-bottom: 16px;
             outline: none;
+            transition: all 0.2s;
         }
-        .login-card input:focus { border-color: #1A73E8; }
-
-        .nav {
-            background: white;
-            border-bottom: 1px solid #EEE;
-            display: flex;
-            gap: 0;
-        }
-        .nav-item {
-            padding: 14px 24px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            color: #666;
-            border-bottom: 3px solid transparent;
-        }
-        .nav-item.active {
-            color: #1A73E8;
-            border-bottom-color: #1A73E8;
-        }
-        .nav-item:hover { background: #F8F9FA; }
-
-        .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        .stat-card .number {
-            font-size: 36px;
-            font-weight: 700;
-            color: #1A73E8;
-        }
-        .stat-card .label {
-            font-size: 13px;
-            color: #888;
-            margin-top: 4px;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #222;
-            margin-bottom: 16px;
-        }
-
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            margin-bottom: 16px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th {
-            text-align: left;
-            padding: 12px 16px;
-            font-size: 12px;
-            text-transform: uppercase;
-            color: #888;
-            border-bottom: 1px solid #EEE;
-        }
-        td {
-            padding: 14px 16px;
-            font-size: 14px;
-            color: #333;
-            border-bottom: 1px solid #F5F5F5;
-        }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: #FAFAFA; }
-
-        .badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .badge-green { background: #E8F5E9; color: #34A853; }
-        .badge-blue { background: #E8F0FE; color: #1A73E8; }
-        .badge-orange { background: #FFF3E0; color: #FB8C00; }
-        .badge-red { background: #FFEBEE; color: #E53935; }
-        .badge-gray { background: #F5F5F5; color: #888; }
-
-        .btn {
-            padding: 7px 16px;
-            border: none;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-right: 6px;
-        }
-        .btn-approve { background: #34A853; color: white; }
-        .btn-reject { background: #FFEBEE; color: #E53935; }
-        .btn-primary { background: #1A73E8; color: white; }
-        .btn-gray { background: #F5F5F5; color: #555; }
-        .btn:hover { opacity: 0.85; }
-
-        .empty {
-            text-align: center;
-            padding: 40px;
-            color: #AAAAAA;
-            font-size: 15px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #888;
-        }
-
-        .filter-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        .filter-btn {
-            padding: 6px 14px;
-            border: 1px solid #DDD;
-            border-radius: 20px;
-            background: white;
-            font-size: 13px;
-            cursor: pointer;
-            color: #555;
-        }
-        .filter-btn.active {
-            background: #1A73E8;
-            color: white;
-            border-color: #1A73E8;
-        }
-
-        .hidden { display: none; }
+        input:focus { border-color: #BB86FC; box-shadow: 0 0 0 2px rgba(187, 134, 252, 0.2); }
+        .nav-active { color: #BB86FC; border-left: 4px solid #BB86FC; background: rgba(187, 134, 252, 0.1); }
+        .card-hover:hover { border-color: rgba(187, 134, 252, 0.5); transform: translateY(-2px); }
     </style>
 </head>
-<body>
+<body class="custom-scroll">
 
-<!-- Login screen -->
-<div class="login-screen" id="loginScreen">
-    <div class="login-card">
-        <h2>🔧 Rovefix</h2>
-        <p>Admin Panel — Zanvis Technologies</p>
-        <input type="password" id="adminKeyInput"
-               placeholder="Enter admin key"
-               onkeypress="if(event.key==='Enter') login()"/>
-        <button class="btn btn-primary"
-                style="width:100%;padding:13px;font-size:15px"
-                onclick="login()">Login</button>
-        <p id="loginError"
-           style="color:#E53935;font-size:13px;margin-top:12px"></p>
+<!-- Authentication Gateway -->
+<div id="loginOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black">
+    <div class="w-full max-w-md p-8 glass border border-white/10 rounded-3xl text-center">
+        <div class="mb-8">
+            <span class="text-4xl">🔧</span>
+            <h1 class="text-3xl font-bold mt-4 tracking-tight">ROVEFIX</h1>
+            <p class="text-admin-muted text-sm mt-1 uppercase tracking-widest">Command Center</p>
+        </div>
+        <div class="space-y-4">
+            <input type="password" id="adminKey" placeholder="Authorization Key"
+                   class="w-full p-4 rounded-xl text-center text-lg"
+                   onkeypress="if(event.key==='Enter') attemptAuth()">
+            <button onclick="attemptAuth()" class="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-admin-accent hover:text-white transition-all duration-300 shadow-xl shadow-white/5">
+                EXECUTE LOGIN
+            </button>
+            <p id="authError" class="text-admin-error text-sm hidden">Invalid Credentials. Access Denied.</p>
+        </div>
+        <p class="mt-12 text-admin-muted text-xs uppercase opacity-50">Secure Enterprise Environment</p>
     </div>
 </div>
 
-<!-- Main panel -->
-<div id="mainPanel" class="hidden">
+<!-- Main Application UI -->
+<div id="adminApp" class="flex h-screen hidden overflow-hidden">
 
-    <div class="header">
-        <h1>🔧 Rovefix Admin</h1>
-        <span id="headerStats">Loading...</span>
-    </div>
-
-    <div class="nav">
-        <div class="nav-item active" onclick="showTab('dashboard')">
-            Dashboard</div>
-        <div class="nav-item" onclick="showTab('pending')">
-            Pending Approvals <span id="pendingBadge"></span></div>
-        <div class="nav-item" onclick="showTab('technicians')">
-            Technicians</div>
-        <div class="nav-item" onclick="showTab('jobs')">Jobs</div>
-        <div class="nav-item" onclick="showTab('users')">Users</div>
-    </div>
-
-    <div class="content">
-
-        <!-- Dashboard tab -->
-        <div id="tab-dashboard">
-            <div class="stats-grid" id="statsGrid">
-                <div class="loading">Loading stats...</div>
+    <!-- Sidebar Navigation -->
+    <aside class="w-72 bg-admin-card border-r border-white/5 flex flex-col">
+        <div class="p-8 border-b border-white/5 flex items-center gap-3">
+            <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-black font-black text-xl">R</div>
+            <div>
+                <h2 class="font-bold leading-none">Rovefix</h2>
+                <span class="text-[10px] text-admin-muted font-bold tracking-widest uppercase">Admin v2.0</span>
             </div>
         </div>
 
-        <!-- Pending approvals tab -->
-        <div id="tab-pending" class="hidden">
-            <p class="section-title">Pending Technician Approvals</p>
-            <div class="card">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Phone</th>
-                        <th>City</th>
-                        <th>Category</th>
-                        <th>Joined</th>
-                        <th>Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody id="pendingTable">
-                    <tr><td colspan="6" class="loading">
-                        Loading...</td></tr>
-                    </tbody>
-                </table>
+        <nav class="flex-1 mt-6 px-4 space-y-2">
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-admin-muted hover:text-white transition-all nav-active">
+                <i class="fa-solid fa-chart-line w-5"></i> Dashboard
+            </button>
+            <button onclick="switchTab('pending')" id="nav-pending" class="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-admin-muted hover:text-white transition-all relative">
+                <i class="fa-solid fa-id-card w-5"></i> Verifications
+                <span id="pendingCountBadge" class="hidden absolute right-4 w-5 h-5 bg-admin-error text-white text-[10px] flex items-center justify-center rounded-full font-bold">0</span>
+            </button>
+            <button onclick="switchTab('users')" id="nav-users" class="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-admin-muted hover:text-white transition-all">
+                <i class="fa-solid fa-users w-5"></i> User Directory
+            </button>
+            <button onclick="switchTab('jobs')" id="nav-jobs" class="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-admin-muted hover:text-white transition-all">
+                <i class="fa-solid fa-ledger w-5"></i> System Ledger
+            </button>
+        </nav>
+
+        <div class="p-8 border-t border-white/5">
+            <button onclick="logout()" class="w-full p-4 border border-white/10 rounded-xl text-admin-muted hover:text-admin-error hover:border-admin-error transition-all flex items-center justify-center gap-3">
+                <i class="fa-solid fa-power-off"></i> Terminal Exit
+            </button>
+        </div>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="flex-1 flex flex-col bg-admin-surface overflow-hidden">
+
+        <!-- Top Bar -->
+        <header class="h-20 border-b border-white/5 flex items-center justify-between px-10 glass">
+            <h3 id="currentTabTitle" class="text-xl font-semibold">Overview</h3>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2 px-4 py-2 bg-admin-success/10 rounded-full">
+                    <div class="w-2 h-2 bg-admin-success rounded-full animate-pulse"></div>
+                    <span class="text-[10px] font-bold text-admin-success uppercase tracking-widest">Server Operational</span>
+                </div>
+                <div id="adminId" class="text-sm font-medium text-admin-muted">Admin: <span class="text-white">Zanvis Dev</span></div>
+            </div>
+        </header>
+
+        <!-- Dynamic Content -->
+        <div id="contentContainer" class="flex-1 overflow-y-auto p-10 custom-scroll">
+
+            <!-- DASHBOARD VIEW -->
+            <div id="view-dashboard" class="space-y-10 animate-fade-in">
+                <!-- Stats Row -->
+                <div class="grid grid-cols-4 gap-6">
+                    <div class="bg-admin-card p-8 rounded-3xl border border-white/5 card-hover transition-all">
+                        <p class="text-admin-muted text-xs font-bold uppercase tracking-widest">Gross Revenue</p>
+                        <h4 id="stat-revenue" class="text-3xl font-bold mt-2 tracking-tight">₹ 0.00</h4>
+                    </div>
+                    <div class="bg-admin-card p-8 rounded-3xl border border-white/5 card-hover transition-all">
+                        <p class="text-admin-muted text-xs font-bold uppercase tracking-widest">Active Jobs</p>
+                        <h4 id="stat-jobs" class="text-3xl font-bold mt-2">0</h4>
+                    </div>
+                    <div class="bg-admin-card p-8 rounded-3xl border border-white/5 card-hover transition-all">
+                        <p class="text-admin-muted text-xs font-bold uppercase tracking-widest">Registered Users</p>
+                        <h4 id="stat-users" class="text-3xl font-bold mt-2 text-admin-accent">0</h4>
+                    </div>
+                    <div class="bg-admin-card p-8 rounded-3xl border border-white/5 card-hover transition-all">
+                        <p class="text-admin-muted text-xs font-bold uppercase tracking-widest">Pending Approvals</p>
+                        <h4 id="stat-pending" class="text-3xl font-bold mt-2 text-admin-error">0</h4>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-8">
+                    <!-- Recent Activity or charts could go here -->
+                    <div class="col-span-2 bg-admin-card rounded-3xl border border-white/5 p-8">
+                        <div class="flex items-center justify-between mb-8">
+                            <h5 class="text-lg font-bold">System Health</h5>
+                            <span class="text-xs text-admin-muted font-mono tracking-widest uppercase">Logs Live</span>
+                        </div>
+                        <div class="space-y-4 font-mono text-[11px] text-admin-muted opacity-80">
+                            <p class="flex gap-4"><span class="text-admin-success">[INFO]</span> Database connection established (Pooler node us-east-1)</p>
+                            <p class="flex gap-4"><span class="text-admin-success">[INFO]</span> Auth module initialized with Firebase SDK 10.x</p>
+                            <p class="flex gap-4"><span class="text-admin-accent">[ADM]</span> Dashboard accessed by System Root</p>
+                            <p class="flex gap-4"><span class="text-admin-success">[INFO]</span> 10% platform commission logic verified active</p>
+                        </div>
+                    </div>
+                    <div class="bg-admin-card rounded-3xl border border-white/5 p-8 overflow-hidden relative">
+                        <h5 class="text-lg font-bold mb-6">Quick Actions</h5>
+                        <div class="space-y-3">
+                            <button onclick="switchTab('pending')" class="w-full p-4 bg-admin-accent/10 border border-admin-accent/20 rounded-2xl text-admin-accent text-sm font-bold text-left hover:bg-admin-accent/20 transition-all">
+                                Approve Technicians
+                            </button>
+                            <button onclick="switchTab('users')" class="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white text-sm font-bold text-left hover:bg-white/10 transition-all">
+                                Manage User Wallets
+                            </button>
+                            <button class="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white text-sm font-bold text-left opacity-30 cursor-not-allowed">
+                                System Reports (Coming Soon)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLE VIEWS -->
+            <div id="view-table" class="hidden animate-fade-in">
+                <div class="bg-admin-card rounded-3xl border border-white/5 overflow-hidden">
+                    <div class="p-8 border-b border-white/5 flex items-center justify-between bg-white/5">
+                        <div class="flex items-center gap-4">
+                            <div class="relative">
+                                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-admin-muted text-xs"></i>
+                                <input type="text" id="tableSearch" placeholder="Search record ID or phone..." class="pl-12 pr-6 py-3 w-80 rounded-xl text-sm border-white/5">
+                            </div>
+                        </div>
+                        <button onclick="reloadData()" class="p-3 hover:bg-white/5 rounded-xl text-admin-muted hover:text-white transition-all">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-black/20 text-[10px] font-bold text-admin-muted tracking-widest uppercase">
+                                <tr id="tableHead">
+                                    <!-- Dynamic Header -->
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="divide-y divide-white/5 text-sm text-admin-muted">
+                                <!-- Dynamic Data -->
+                            </tbody>
+                        </table>
+                        <div id="tableLoader" class="p-20 flex flex-col items-center justify-center gap-4">
+                            <div class="w-12 h-12 border-4 border-admin-accent border-t-transparent rounded-full animate-spin"></div>
+                            <p class="text-xs uppercase tracking-widest text-admin-muted font-bold">Retrieving Data Cluster...</p>
+                        </div>
+                        <div id="tableEmpty" class="p-20 text-center hidden">
+                            <span class="text-4xl">📂</span>
+                            <p class="mt-4 text-admin-muted">No records found in this sequence.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Modal: User Management -->
+<div id="userModal" class="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center hidden p-8">
+    <div class="w-full max-w-2xl bg-admin-card rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
+        <div class="p-8 border-b border-white/5 flex justify-between items-center bg-white/5">
+            <h6 class="text-xl font-bold" id="modalTitle">User Command</h6>
+            <button onclick="closeModal()" class="text-admin-muted hover:text-white"><i class="fa-solid fa-xmark text-2xl"></i></button>
+        </div>
+        <div class="p-8 space-y-8">
+            <div class="flex items-center gap-6">
+                <div id="modalAvatar" class="w-20 h-20 bg-admin-surface rounded-3xl border border-white/10 flex items-center justify-center text-4xl">👤</div>
+                <div class="flex-1">
+                    <h2 id="modalUserName" class="text-2xl font-bold leading-tight">...</h2>
+                    <p id="modalUserId" class="text-admin-muted text-xs font-mono opacity-50 mt-1">ID: ...</p>
+                    <div id="modalBadges" class="mt-2 flex gap-2"></div>
+                </div>
+                <div class="text-right">
+                    <p class="text-admin-muted text-[10px] font-bold uppercase tracking-widest">Current Balance</p>
+                    <h3 id="modalBalance" class="text-2xl font-bold text-admin-success mt-1">₹ 0.00</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-8 pt-4">
+                <div class="space-y-4">
+                    <h5 class="text-xs font-bold text-admin-muted uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-wallet text-admin-accent"></i> Wallet Adjustment
+                    </h5>
+                    <div class="flex gap-2">
+                        <input type="number" id="walletAmount" placeholder="Amount" class="flex-1 p-4 rounded-xl text-lg font-bold">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="adjustWallet('credit')" class="p-3 bg-admin-success/10 text-admin-success border border-admin-success/20 rounded-xl font-bold text-xs hover:bg-admin-success hover:text-black transition-all">CREDIT (+)</button>
+                        <button onclick="adjustWallet('debit')" class="p-3 bg-admin-error/10 text-admin-error border border-admin-error/20 rounded-xl font-bold text-xs hover:bg-admin-error hover:text-white transition-all">DEBIT (-)</button>
+                    </div>
+                </div>
+                <div class="space-y-4 border-l border-white/5 pl-8">
+                    <h5 class="text-xs font-bold text-admin-muted uppercase tracking-widest flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-admin-error"></i> System Integrity
+                    </h5>
+                    <div class="p-4 bg-admin-error/5 border border-admin-error/10 rounded-2xl">
+                        <p class="text-[11px] text-admin-muted leading-relaxed">Permanently ban this user. All active bids and jobs will be terminated immediately.</p>
+                        <button onclick="banUser()" class="w-full mt-4 p-3 bg-admin-error text-white rounded-xl font-bold text-xs hover:shadow-lg hover:shadow-admin-error/20 transition-all uppercase">Execute System Ban</button>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Technicians tab -->
-        <div id="tab-technicians" class="hidden">
-            <p class="section-title">All Technicians</p>
-            <div class="card">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Phone</th>
-                        <th>City</th>
-                        <th>Category</th>
-                        <th>Rating</th>
-                        <th>Jobs</th>
-                        <th>Status</th>
-                    </tr>
-                    </thead>
-                    <tbody id="techniciansTable">
-                    <tr><td colspan="7" class="loading">
-                        Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Jobs tab -->
-        <div id="tab-jobs" class="hidden">
-            <p class="section-title">All Jobs</p>
-            <div class="filter-row">
-                <button class="filter-btn active"
-                        onclick="filterJobs('all', this)">All</button>
-                <button class="filter-btn"
-                        onclick="filterJobs('open', this)">Open</button>
-                <button class="filter-btn"
-                        onclick="filterJobs('matched', this)">Matched</button>
-                <button class="filter-btn"
-                        onclick="filterJobs('in_progress', this)">
-                    In Progress</button>
-                <button class="filter-btn"
-                        onclick="filterJobs('done', this)">Done</button>
-                <button class="filter-btn"
-                        onclick="filterJobs('disputed', this)">Disputed</button>
-            </div>
-            <div class="card">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Location</th>
-                        <th>Price</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                    </tr>
-                    </thead>
-                    <tbody id="jobsTable">
-                    <tr><td colspan="6" class="loading">
-                        Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Users tab -->
-        <div id="tab-users" class="hidden">
-            <p class="section-title">All Users</p>
-            <div class="card">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Phone</th>
-                        <th>City</th>
-                        <th>Type</th>
-                        <th>Verified</th>
-                        <th>Joined</th>
-                    </tr>
-                    </thead>
-                    <tbody id="usersTable">
-                    <tr><td colspan="6" class="loading">
-                        Loading...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
     </div>
 </div>
 
 <script>
-    const BASE_URL = 'https://rovefix-backend.onrender.com'
-    let adminKey = ''
-    let currentTab = 'dashboard'
+    const API_URL = window.location.origin + '/admin';
+    let currentAuthKey = localStorage.getItem('rf_admin_key') || '';
+    let currentTab = 'dashboard';
+    let selectedUserId = null;
+    let tableData = [];
 
-    function login() {
-        const key = document.getElementById('adminKeyInput').value
-        if (!key) return
+    // Boot
+    window.onload = () => {
+        if (currentAuthKey) attemptAuth(currentAuthKey);
+    };
 
-        fetch(`${BASE_URL}/admin/dashboard`, {
-            headers: { 'x-admin-key': key }
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                adminKey = key
-                document.getElementById('loginScreen').classList.add('hidden')
-                document.getElementById('mainPanel').classList.remove('hidden')
-                loadDashboard()
-            } else {
-                document.getElementById('loginError').textContent =
-                    'Invalid admin key'
-            }
-        })
-        .catch(() => {
-            document.getElementById('loginError').textContent =
-                'Connection error'
-        })
+    function attemptAuth(key) {
+        const authInput = key || document.getElementById('adminKey').value;
+        if (!authInput) return;
+
+        const authHeader = authInput.startsWith('Bearer ') ? authInput : `Bearer ${authInput}`;
+
+        fetch(`${API_URL}/dashboard`, { headers: { 'Authorization': authHeader } })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    currentAuthKey = authHeader;
+                    localStorage.setItem('rf_admin_key', authHeader);
+                    document.getElementById('loginOverlay').classList.add('hidden');
+                    document.getElementById('adminApp').classList.remove('hidden');
+                    refreshDashboard();
+                } else {
+                    document.getElementById('authError').classList.remove('hidden');
+                    localStorage.removeItem('rf_admin_key');
+                }
+            })
+            .catch(err => alert("Cluster Offline: " + err));
     }
 
-    function showTab(tab) {
-        // Hide all tabs
-        document.querySelectorAll('[id^="tab-"]').forEach(t => {
-            t.classList.add('hidden')
-        })
-        // Remove active from nav
-        document.querySelectorAll('.nav-item').forEach(n => {
-            n.classList.remove('active')
-        })
-        // Show selected tab
-        document.getElementById(`tab-${tab}`).classList.remove('hidden')
-        event.target.classList.add('active')
-        currentTab = tab
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('nav button').forEach(el => el.classList.remove('nav-active'));
+        document.getElementById(`nav-${tab}`).classList.add('nav-active');
 
-        // Load data
-        if (tab === 'dashboard') loadDashboard()
-        else if (tab === 'pending') loadPending()
-        else if (tab === 'technicians') loadTechnicians()
-        else if (tab === 'jobs') loadJobs('all')
-        else if (tab === 'users') loadUsers()
-    }
+        document.getElementById('currentTabTitle').textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
 
-    function apiGet(endpoint) {
-        return fetch(`${BASE_URL}${endpoint}`, {
-            headers: { 'x-admin-key': adminKey }
-        }).then(r => r.json())
-    }
-
-    function apiPut(endpoint) {
-        return fetch(`${BASE_URL}${endpoint}`, {
-            method: 'PUT',
-            headers: { 'x-admin-key': adminKey }
-        }).then(r => r.json())
-    }
-
-    function loadDashboard() {
-        apiGet('/admin/dashboard').then(data => {
-            if (!data.success) return
-            const s = data.stats
-            document.getElementById('statsGrid').innerHTML = `
-                <div class="stat-card">
-                    <div class="number">${s.totalUsers}</div>
-                    <div class="label">Homeowners</div>
-                </div>
-                <div class="stat-card">
-                    <div class="number">${s.totalTechnicians}</div>
-                    <div class="label">Technicians</div>
-                </div>
-                <div class="stat-card">
-                    <div class="number" style="color:#FB8C00">
-                        ${s.pendingApprovals}</div>
-                    <div class="label">Pending Approvals</div>
-                </div>
-                <div class="stat-card">
-                    <div class="number">${s.totalJobs}</div>
-                    <div class="label">Total Jobs</div>
-                </div>
-                <div class="stat-card">
-                    <div class="number" style="color:#34A853">
-                        ${s.activeJobs}</div>
-                    <div class="label">Active Jobs</div>
-                </div>
-                <div class="stat-card">
-                    <div class="number" style="color:#888">
-                        ${s.completedJobs}</div>
-                    <div class="label">Completed</div>
-                </div>
-                <div class="stat-card">
-                    <div class="number" style="color:#34A853">
-                        ₹${Math.round(s.totalCommission)}</div>
-                    <div class="label">Total Revenue</div>
-                </div>
-            `
-            document.getElementById('headerStats').textContent =
-                `${s.totalUsers} users • ${s.totalJobs} jobs`
-
-            if (s.pendingApprovals > 0) {
-                document.getElementById('pendingBadge').textContent =
-                    ` (${s.pendingApprovals})`
-                document.getElementById('pendingBadge').style.color = '#E53935'
-            }
-        })
-    }
-
-    function loadPending() {
-        apiGet('/admin/technicians/pending').then(data => {
-            if (!data.success) return
-            const tbody = document.getElementById('pendingTable')
-
-            if (data.technicians.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="empty">
-                    No pending approvals 🎉</td></tr>`
-                return
-            }
-
-            tbody.innerHTML = data.technicians.map(t => `
-                <tr>
-                    <td><strong>${t.user?.name || 'N/A'}</strong></td>
-                    <td>${t.user?.phone || 'N/A'}</td>
-                    <td>${t.user?.city || 'N/A'}</td>
-                    <td>${t.category}</td>
-                    <td>${new Date(t.user?.created_at)
-                        .toLocaleDateString()}</td>
-                    <td>
-                        <button class="btn btn-approve"
-                            onclick="approveTechnician('${t.id}')">
-                            ✓ Approve</button>
-                        <button class="btn btn-reject"
-                            onclick="rejectTechnician('${t.id}')">
-                            ✗ Reject</button>
-                    </td>
-                </tr>
-            `).join('')
-        })
-    }
-
-    function approveTechnician(id) {
-        if (!confirm('Approve this technician?')) return
-        apiPut(`/admin/technicians/${id}/approve`).then(data => {
-            if (data.success) {
-                alert('Technician approved ✅')
-                loadPending()
-                loadDashboard()
-            }
-        })
-    }
-
-    function rejectTechnician(id) {
-        if (!confirm('Reject and remove this technician?')) return
-        apiPut(`/admin/technicians/${id}/reject`).then(data => {
-            if (data.success) {
-                alert('Technician rejected')
-                loadPending()
-            }
-        })
-    }
-
-    function loadTechnicians() {
-        apiGet('/admin/users').then(data => {
-            if (!data.success) return
-            const techs = data.users.filter(u => u.user_type === 'technician')
-            const tbody = document.getElementById('techniciansTable')
-
-            if (techs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="empty">
-                    No technicians yet</td></tr>`
-                return
-            }
-
-            tbody.innerHTML = techs.map(t => `
-                <tr>
-                    <td><strong>${t.name}</strong></td>
-                    <td>${t.phone}</td>
-                    <td>${t.city || 'N/A'}</td>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>—</td>
-                    <td>${t.is_verified
-                        ? '<span class="badge badge-green">Verified</span>'
-                        : '<span class="badge badge-orange">Pending</span>'
-                    }</td>
-                </tr>
-            `).join('')
-        })
-    }
-
-    function loadJobs(status) {
-        const endpoint = status === 'all'
-            ? '/admin/jobs'
-            : `/admin/jobs?status=${status}`
-
-        apiGet(endpoint).then(data => {
-            if (!data.success) return
-            const tbody = document.getElementById('jobsTable')
-
-            if (data.jobs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="empty">
-                    No jobs found</td></tr>`
-                return
-            }
-
-            tbody.innerHTML = data.jobs.map(j => `
-                <tr>
-                    <td>${j.category}</td>
-                    <td>${j.description?.substring(0, 50)}...</td>
-                    <td>${j.location}</td>
-                    <td>${j.price ? '₹' + j.price : '—'}</td>
-                    <td>${statusBadge(j.status)}</td>
-                    <td>${new Date(j.createdAt).toLocaleDateString()}</td>
-                </tr>
-            `).join('')
-        })
-    }
-
-    function filterJobs(status, btn) {
-        document.querySelectorAll('.filter-btn').forEach(b => {
-            b.classList.remove('active')
-        })
-        btn.classList.add('active')
-        loadJobs(status)
-    }
-
-    function loadUsers() {
-        apiGet('/admin/users').then(data => {
-            if (!data.success) return
-            const tbody = document.getElementById('usersTable')
-
-            if (data.users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="empty">
-                    No users yet</td></tr>`
-                return
-            }
-
-            tbody.innerHTML = data.users.map(u => `
-                <tr>
-                    <td><strong>${u.name}</strong></td>
-                    <td>${u.phone}</td>
-                    <td>${u.city || 'N/A'}</td>
-                    <td>${u.user_type === 'homeowner'
-                        ? '<span class="badge badge-blue">Homeowner</span>'
-                        : '<span class="badge badge-green">Technician</span>'
-                    }</td>
-                    <td>${u.is_verified
-                        ? '<span class="badge badge-green">Yes</span>'
-                        : '<span class="badge badge-gray">No</span>'
-                    }</td>
-                    <td>${new Date(u.createdAt).toLocaleDateString()}</td>
-                </tr>
-            `).join('')
-        })
-    }
-
-    function statusBadge(status) {
-        const map = {
-            open: 'badge-green',
-            matched: 'badge-blue',
-            in_progress: 'badge-orange',
-            done: 'badge-gray',
-            disputed: 'badge-red'
+        if (tab === 'dashboard') {
+            document.getElementById('view-dashboard').classList.remove('hidden');
+            document.getElementById('view-table').classList.add('hidden');
+            refreshDashboard();
+        } else {
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-table').classList.remove('hidden');
+            loadTableData(tab);
         }
-        return `<span class="badge ${map[status] || 'badge-gray'}">
-            ${status}</span>`
+    }
+
+    function refreshDashboard() {
+        fetch(`${API_URL}/dashboard`, { headers: { 'Authorization': currentAuthKey } })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const s = data.stats;
+                    document.getElementById('stat-revenue').textContent = `₹${s.totalCommission.toFixed(2)}`;
+                    document.getElementById('stat-jobs').textContent = s.activeJobs;
+                    document.getElementById('stat-users').textContent = (s.totalUsers + s.totalTechnicians);
+                    document.getElementById('stat-pending').textContent = s.pendingApprovals;
+
+                    const badge = document.getElementById('pendingCountBadge');
+                    if (s.pendingApprovals > 0) {
+                        badge.textContent = s.pendingApprovals;
+                        badge.classList.remove('hidden');
+                    } else badge.classList.add('hidden');
+                }
+            });
+    }
+
+    function loadTableData(type) {
+        const body = document.getElementById('tableBody');
+        const head = document.getElementById('tableHead');
+        const loader = document.getElementById('tableLoader');
+        const empty = document.getElementById('tableEmpty');
+
+        body.innerHTML = '';
+        loader.classList.remove('hidden');
+        empty.classList.add('hidden');
+
+        let endpoint = '';
+        if (type === 'users') {
+            endpoint = '/users';
+            head.innerHTML = '<th class="p-6">User Details</th><th class="p-6">Type</th><th class="p-6">Balance</th><th class="p-6">Status</th><th class="p-6 text-right">Registered</th>';
+        } else if (type === 'pending') {
+            endpoint = '/technicians/pending';
+            head.innerHTML = '<th class="p-6">Candidate</th><th class="p-6">Category</th><th class="p-6">ID Document</th><th class="p-6 text-right">Actions</th>';
+        } else if (type === 'jobs') {
+            endpoint = '/jobs';
+            head.innerHTML = '<th class="p-6">Job Description</th><th class="p-6">Location</th><th class="p-6">Price</th><th class="p-6">Status</th><th class="p-6 text-right">Posted</th>';
+        }
+
+        fetch(`${API_URL}${endpoint}`, { headers: { 'Authorization': currentAuthKey } })
+            .then(res => res.json())
+            .then(data => {
+                loader.classList.add('hidden');
+                tableData = (data.users || data.technicians || data.jobs || []);
+
+                if (tableData.length === 0) {
+                    empty.classList.remove('hidden');
+                    return;
+                }
+
+                body.innerHTML = tableData.map(item => {
+                    if (type === 'users') {
+                        return `
+                            <tr class="hover:bg-white/[0.02] cursor-pointer group" onclick="openUserModal('${item.id}')">
+                                <td class="p-6">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center font-bold text-admin-muted group-hover:text-white transition-all">${item.name.charAt(0)}</div>
+                                        <div>
+                                            <p class="font-bold text-white">${item.name}</p>
+                                            <p class="text-[11px] opacity-60 mt-1">${item.phone}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="p-6">
+                                    <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${item.user_type === 'technician' ? 'bg-admin-accent/20 text-admin-accent' : 'bg-admin-success/20 text-admin-success'}">${item.user_type}</span>
+                                </td>
+                                <td class="p-6 font-bold text-white">₹${item.wallet_balance.toFixed(2)}</td>
+                                <td class="p-6">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full ${item.is_verified ? 'bg-admin-success' : 'bg-admin-error'}"></div>
+                                        <span class="text-[11px] uppercase font-bold">${item.is_verified ? 'Verified' : 'Unverified'}</span>
+                                    </div>
+                                </td>
+                                <td class="p-6 text-right text-xs opacity-60">${new Date(item.createdAt).toLocaleDateString()}</td>
+                            </tr>
+                        `;
+                    } else if (type === 'pending') {
+                        return `
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="p-6">
+                                    <p class="font-bold text-white">${item.user?.name}</p>
+                                    <p class="text-[11px] opacity-60 mt-1">${item.user?.phone}</p>
+                                </td>
+                                <td class="p-6 font-medium uppercase text-admin-accent text-[11px] tracking-widest">${item.category}</td>
+                                <td class="p-6">
+                                    <a href="${item.id_doc_url}" target="_blank" class="text-xs text-admin-accent hover:underline flex items-center gap-2">
+                                        <i class="fa-solid fa-image"></i> View Document
+                                    </a>
+                                </td>
+                                <td class="p-6 text-right space-x-2">
+                                    <button onclick="actionTech('${item.id}', 'approve')" class="px-4 py-2 bg-admin-success text-black text-[10px] font-bold rounded-lg uppercase">Approve</button>
+                                    <button onclick="actionTech('${item.id}', 'reject')" class="px-4 py-2 border border-admin-error/20 text-admin-error text-[10px] font-bold rounded-lg uppercase hover:bg-admin-error hover:text-white transition-all">Reject</button>
+                                </td>
+                            </tr>
+                        `;
+                    } else if (type === 'jobs') {
+                        return `
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="p-6 max-w-sm">
+                                    <p class="font-bold text-white truncate">${item.description}</p>
+                                    <p class="text-[10px] font-bold text-admin-accent uppercase mt-1">${item.category}</p>
+                                </td>
+                                <td class="p-6 text-xs">${item.location}</td>
+                                <td class="p-6 font-bold text-white">₹${item.price || '0'}</td>
+                                <td class="p-6">
+                                    <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter bg-white/10 text-white">${item.status}</span>
+                                </td>
+                                <td class="p-6 text-right text-xs opacity-60">${new Date(item.createdAt).toLocaleDateString()}</td>
+                            </tr>
+                        `;
+                    }
+                }).join('');
+            });
+    }
+
+    function openUserModal(id) {
+        const user = tableData.find(u => u.id === id);
+        if (!user) return;
+        selectedUserId = id;
+
+        document.getElementById('modalTitle').textContent = `Command: ${user.user_type.toUpperCase()}`;
+        document.getElementById('modalUserName').textContent = user.name;
+        document.getElementById('modalUserId').textContent = `System Cluster UID: ${user.id}`;
+        document.getElementById('modalBalance').textContent = `₹${user.wallet_balance.toFixed(2)}`;
+        document.getElementById('modalAvatar').textContent = user.name.charAt(0);
+
+        const badges = document.getElementById('modalBadges');
+        badges.innerHTML = `
+            <span class="px-2 py-1 bg-white/5 rounded text-[10px] font-mono tracking-tighter border border-white/5">VERIFIED: ${user.is_verified ? 'TRUE' : 'FALSE'}</span>
+            <span class="px-2 py-1 bg-white/5 rounded text-[10px] font-mono tracking-tighter border border-white/5">TYPE: ${user.user_type.toUpperCase()}</span>
+        `;
+
+        document.getElementById('userModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+        document.getElementById('userModal').classList.add('hidden');
+        selectedUserId = null;
+    }
+
+    function adjustWallet(type) {
+        const amt = document.getElementById('walletAmount').value;
+        if (!amt || amt <= 0) return alert("Invalid amount parameter.");
+
+        if (!confirm(`Confirm ${type.toUpperCase()} adjustment of ₹${amt}?`)) return;
+
+        fetch(`${API_URL}/users/${selectedUserId}/wallet`, {
+            method: 'PUT',
+            headers: { 'Authorization': currentAuthKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: parseFloat(amt), type, description: 'Command Center Manual Override' })
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                alert("Sequence Successful.");
+                closeModal();
+                reloadData();
+            }
+        });
+    }
+
+    function banUser() {
+        if (!confirm("TERMINATE USER SESSION PERMANENTLY? This action is IRREVERSIBLE.")) return;
+
+        fetch(`${API_URL}/users/${selectedUserId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': currentAuthKey }
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                alert("User purged from system.");
+                closeModal();
+                reloadData();
+            }
+        });
+    }
+
+    function actionTech(id, type) {
+        if (!confirm(`Execute ${type} for technician profile?`)) return;
+
+        fetch(`${API_URL}/technicians/${id}/${type}`, {
+            method: 'PUT',
+            headers: { 'Authorization': currentAuthKey }
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                alert("Operation successful.");
+                loadTableData('pending');
+                refreshDashboard();
+            }
+        });
+    }
+
+    function reloadData() {
+        if (currentTab === 'dashboard') refreshDashboard();
+        else loadTableData(currentTab);
+    }
+
+    function logout() {
+        localStorage.removeItem('rf_admin_key');
+        location.reload();
     }
 </script>
 

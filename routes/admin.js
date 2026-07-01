@@ -211,4 +211,46 @@ router.get('/users/:id', adminAuth, async (req, res) => {
   }
 })
 
+// PUT /admin/users/:id/wallet
+// Manually adjust a user's wallet
+router.put('/users/:id/wallet', adminAuth, async (req, res) => {
+  try {
+    const { amount, type, description } = req.body
+    const user = await User.findByPk(req.params.id)
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' })
+
+    if (type === 'credit') {
+      await user.increment('wallet_balance', { by: amount })
+    } else {
+      await user.decrement('wallet_balance', { by: amount })
+    }
+
+    const WalletTransaction = require('../models/WalletTransaction')
+    await WalletTransaction.create({
+      user_id: user.id,
+      amount,
+      type,
+      description: description || 'Admin Adjustment'
+    })
+
+    res.json({ success: true, message: 'Wallet updated' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// DELETE /admin/users/:id
+// Ban/Delete user
+router.delete('/users/:id', adminAuth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id)
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' })
+
+    await user.destroy()
+    res.json({ success: true, message: 'User removed from system' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 module.exports = router
