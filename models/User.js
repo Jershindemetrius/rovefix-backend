@@ -53,6 +53,10 @@ const User = sequelize.define('User', {
       type: DataTypes.STRING,
       allowNull: true
   },
+  photo_url: {
+      type: DataTypes.STRING,
+      allowNull: true
+  },
   fcm_token: {
       type: DataTypes.STRING,
       allowNull: true

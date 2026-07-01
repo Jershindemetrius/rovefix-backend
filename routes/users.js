@@ -9,25 +9,34 @@ const Review = require('../models/Review')
 // PUT /users/profile
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { name, city, category, address } = req.body
+    const { name, city, category, address, photo_url, id_doc_url } = req.body
 
-    await User.update(
-      { name, city, address },
-      { where: { id: req.user.id } }
-    )
+    // Update User table fields
+    const userUpdateData = {}
+    if (name) userUpdateData.name = name
+    if (city) userUpdateData.city = city
+    if (address) userUpdateData.address = address
+    if (photo_url) userUpdateData.photo_url = photo_url
 
-    if (req.user.user_type === 'technician' && category) {
-      const existing = await TechnicianProfile.findOne({
-        where: { user_id: req.user.id }
-      })
-      if (existing) {
-        await existing.update({ category })
-      } else {
-        await TechnicianProfile.create({
-          user_id: req.user.id,
-          category,
-          approved: false
+    if (Object.keys(userUpdateData).length > 0) {
+      await User.update(userUpdateData, { where: { id: req.user.id } })
+    }
+
+    // Update TechnicianProfile if applicable
+    if (req.user.user_type === 'technician') {
+      const techUpdateData = {}
+      if (category) techUpdateData.category = category
+      if (id_doc_url) techUpdateData.id_doc_url = id_doc_url
+
+      if (Object.keys(techUpdateData).length > 0) {
+        const [profile, created] = await TechnicianProfile.findOrCreate({
+          where: { user_id: req.user.id },
+          defaults: techUpdateData
         })
+
+        if (!created) {
+          await profile.update(techUpdateData)
+        }
       }
     }
 
@@ -44,7 +53,7 @@ router.put('/profile', auth, async (req, res) => {
 router.get('/profile', auth, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified', 'wallet_balance']
+      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified', 'wallet_balance', 'photo_url']
     })
 
     let techProfile = null
