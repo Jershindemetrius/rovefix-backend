@@ -11,7 +11,7 @@ async function sendNotification(fcmToken, title, body, data = {}) {
       token: fcmToken
     }
 
-    await admin.auth().app.messaging().send(message)
+    await admin.messaging().send(message)
     console.log('Notification sent successfully')
   } catch (error) {
     console.log('Notification error:', error.message)

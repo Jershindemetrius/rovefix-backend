@@ -1,5 +1,6 @@
 const { initializeApp, cert } = require('firebase-admin/app')
 const { getAuth } = require('firebase-admin/auth')
+const { getMessaging } = require('firebase-admin/messaging')
 
 // Locally: read from the JSON file directly
 // On Render: read from environment variable
@@ -49,6 +50,12 @@ module.exports = {
     if (!firebaseApp) {
       throw new Error('Firebase Admin was not initialized. Check your credentials.')
     }
-    return getAuth()
+    return getAuth(firebaseApp)
+  },
+  messaging: () => {
+    if (!firebaseApp) {
+      throw new Error('Firebase Admin was not initialized. Check your credentials.')
+    }
+    return getMessaging(firebaseApp)
   }
 }

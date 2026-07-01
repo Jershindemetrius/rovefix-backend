@@ -31,6 +31,7 @@ const chatRoutes = require('./routes/chats')
 const bidRoutes = require('./routes/bids')
 const supportRoutes = require('./routes/support')
 const walletRoutes = require('./routes/wallet')
+const uploadRoutes = require('./routes/upload')
 
 // Register routes with a prefix
 app.use('/auth', authRoutes)
@@ -42,6 +43,7 @@ app.use('/chats', chatRoutes)
 app.use('/bids', bidRoutes)
 app.use('/support', supportRoutes)
 app.use('/wallet', walletRoutes)
+app.use('/upload', uploadRoutes)
 
 // Debug Firebase
 app.get('/debug-firebase', (req, res) => {
