@@ -98,11 +98,23 @@ router.post('/verify', async (req, res) => {
 
   } catch (error) {
     console.error('Auth error detail:', error)
+
+    let userHint = 'Ensure your app and backend use the same Firebase project.'
+    if (error.code === 'auth/id-token-expired') {
+      userHint = 'The session has expired. Please try sending a new OTP.'
+    } else if (error.code === 'auth/argument-error') {
+      userHint = 'Invalid token format. Please restart the app and try again.'
+    } else if (error.message.includes('aud')) {
+      userHint = 'Project Mismatch! Your app and backend are using different Firebase projects.'
+    }
+
     res.status(401).json({
       success: false,
       message: error.message || 'Verification failed',
       code: error.code || 'no_code',
-      hint: 'Ensure your app and backend use the same Firebase project and the FIREBASE_SERVICE_ACCOUNT is correct on Render.'
+      hint: userHint,
+      technical_details: error.message,
+      firebase_error_code: error.code
     })
   }
 })

@@ -11,8 +11,15 @@ try {
     // On Render — parse from environment variable
     try {
       console.log('Found FIREBASE_SERVICE_ACCOUNT in env, parsing...')
+      // Remove any hidden whitespace or line breaks that might break JSON.parse
       const rawJson = process.env.FIREBASE_SERVICE_ACCOUNT.trim()
+        .replace(/\n/g, '')
+        .replace(/\r/g, '')
       serviceAccount = JSON.parse(rawJson)
+      // Fix common issue where private key escapes are lost
+      if (serviceAccount.private_key) {
+        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n')
+      }
       console.log('✅ Parsed project_id:', serviceAccount.project_id)
     } catch (parseErr) {
       console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT JSON:', parseErr.message)

@@ -11,7 +11,15 @@ app.use(express.json())
 require('./database')
 
 // Load model associations (relationships between tables)
-require('./models/associations')
+const models = require('./models/associations')
+
+// Database Sync
+const sequelize = require('./database')
+sequelize.sync({ alter: true }).then(() => {
+  console.log('✅ Database synchronized (alter: true)')
+}).catch(err => {
+  console.error('❌ Database sync failed:', err)
+})
 
 // Import routes
 const authRoutes = require('./routes/auth')
@@ -34,6 +42,23 @@ app.use('/chats', chatRoutes)
 app.use('/bids', bidRoutes)
 app.use('/support', supportRoutes)
 app.use('/wallet', walletRoutes)
+
+// Debug Firebase
+app.get('/debug-firebase', (req, res) => {
+  const sa = process.env.FIREBASE_SERVICE_ACCOUNT
+  if (!sa) return res.json({ status: 'missing' })
+  try {
+    const parsed = JSON.parse(sa)
+    res.json({
+      status: 'configured',
+      project_id: parsed.project_id,
+      private_key_present: !!parsed.private_key,
+      client_email: parsed.client_email
+    })
+  } catch(e) {
+    res.json({ status: 'parse_error', error: e.message })
+  }
+})
 
 // Serve admin panel
 app.get('/admin-panel', (req, res) => {

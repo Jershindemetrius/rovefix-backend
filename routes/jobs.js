@@ -174,7 +174,12 @@ router.put('/:id/accept', auth, async (req, res) => {
 
   } catch (error) {
     console.log('Accept job error:', error)
-    res.status(500).json({ success: false, message: 'Failed to accept job' })
+    res.status(500).json({
+      success: false,
+      message: 'Failed to accept job',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    })
   }
 })
 
