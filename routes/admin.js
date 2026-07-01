@@ -149,17 +149,63 @@ router.put('/jobs/:id/dispute', adminAuth, async (req, res) => {
 })
 
 // GET /admin/users
-// Get all users
+// Get users with optional type filter
 router.get('/users', adminAuth, async (req, res) => {
   try {
+    const { type } = req.query
+    const where = type ? { user_type: type } : {}
+
     const users = await User.findAll({
-      attributes: ['id', 'name', 'phone', 'city',
-        'user_type', 'is_verified', 'createdAt'],
+      where,
+      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified', 'wallet_balance', 'createdAt'],
       order: [['createdAt', 'DESC']],
       limit: 100
     })
 
     res.json({ success: true, users })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// GET /admin/technicians
+// Get all technicians with their profile details
+router.get('/technicians', adminAuth, async (req, res) => {
+  try {
+    const technicians = await TechnicianProfile.findAll({
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name', 'phone', 'city', 'is_verified', 'wallet_balance', 'createdAt']
+      }],
+      order: [['createdAt', 'DESC']]
+    })
+
+    res.json({ success: true, technicians })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// GET /admin/users/:id
+// Get full user details and activity
+router.get('/users/:id', adminAuth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id)
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' })
+
+    const jobs = await Job.findAll({
+      where: user.user_type === 'homeowner' ? { homeowner_id: user.id } : { technician_id: user.id },
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    })
+
+    let techProfile = null
+    if (user.user_type === 'technician') {
+      techProfile = await TechnicianProfile.findOne({ where: { user_id: user.id } })
+    }
+
+    res.json({ success: true, user, jobs, techProfile })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }

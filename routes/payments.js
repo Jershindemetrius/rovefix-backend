@@ -5,6 +5,7 @@ const Razorpay = require('razorpay')
 const Payment = require('../models/Payment')
 const Job = require('../models/Job')
 const User = require('../models/User')
+const WalletTransaction = require('../models/WalletTransaction')
 const crypto = require('crypto')
 
 // Helper to get Razorpay instance
@@ -129,6 +130,12 @@ router.post('/verify', auth, async (req, res) => {
       // Deduct from user wallet
       const user = await User.findByPk(req.user.id)
       await user.decrement('wallet_balance', { by: discountApplied })
+      await WalletTransaction.create({
+        user_id: user.id,
+        amount: discountApplied,
+        type: 'debit',
+        description: `Discount applied to Job #${job_id.substring(0, 8)}`
+      })
     }
 
     // Update payment record

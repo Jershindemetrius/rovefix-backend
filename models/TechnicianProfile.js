@@ -40,6 +40,11 @@ const TechnicianProfile = sequelize.define('TechnicianProfile', {
   total_jobs: {
     type: DataTypes.INTEGER,
     defaultValue: 0     // counts completed jobs
+  },
+
+  portfolio_urls: {
+    type: DataTypes.JSON,
+    defaultValue: []
   }
 
 })

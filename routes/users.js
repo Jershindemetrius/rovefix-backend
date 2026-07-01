@@ -44,7 +44,7 @@ router.put('/profile', auth, async (req, res) => {
 router.get('/profile', auth, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified']
+      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified', 'wallet_balance']
     })
 
     let techProfile = null
@@ -126,6 +126,24 @@ router.post('/fcm-token', auth, async (req, res) => {
   } catch (error) {
     console.log('FCM token error:', error)
     res.status(500).json({ success: false })
+  }
+})
+
+// PUT /users/portfolio
+// Update technician portfolio
+router.put('/portfolio', auth, async (req, res) => {
+  try {
+    const { portfolio_urls } = req.body
+    const profile = await TechnicianProfile.findOne({ where: { user_id: req.user.id } })
+
+    if (!profile) {
+      return res.status(404).json({ success: false, message: 'Technician profile not found' })
+    }
+
+    await profile.update({ portfolio_urls })
+    res.json({ success: true, message: 'Portfolio updated' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
   }
 })
 

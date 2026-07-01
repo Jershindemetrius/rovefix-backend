@@ -7,6 +7,7 @@ const router = express.Router()
 const jwt = require('jsonwebtoken')
 const firebaseAdmin = require('../firebase-admin') // we'll create this file next
 const User = require('../models/User')
+const WalletTransaction = require('../models/WalletTransaction')
 const { generateReferralCode } = require('../utils/referral')
 
 // POST /auth/verify
@@ -37,6 +38,12 @@ router.post('/verify', async (req, res) => {
           referredByUserId = referrer.id
           // Reward referrer (₹100)
           await referrer.increment('wallet_balance', { by: 100 })
+          await WalletTransaction.create({
+            user_id: referrer.id,
+            amount: 100,
+            type: 'credit',
+            description: 'Referral Bonus (Invite)'
+          })
         }
       }
 
@@ -51,6 +58,15 @@ router.post('/verify', async (req, res) => {
         referred_by: referredByUserId,
         wallet_balance: referredByUserId ? 50 : 0 // New user gets ₹50 if referred
       })
+
+      if (referredByUserId) {
+        await WalletTransaction.create({
+          user_id: user.id,
+          amount: 50,
+          type: 'credit',
+          description: 'Welcome Bonus (Referral)'
+        })
+      }
     }
 
     // Step 3: create our own JWT token to send back to the app

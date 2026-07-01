@@ -22,6 +22,7 @@ const adminRoutes = require('./routes/admin')
 const chatRoutes = require('./routes/chats')
 const bidRoutes = require('./routes/bids')
 const supportRoutes = require('./routes/support')
+const walletRoutes = require('./routes/wallet')
 
 // Register routes with a prefix
 app.use('/auth', authRoutes)
@@ -32,6 +33,7 @@ app.use('/admin', adminRoutes)
 app.use('/chats', chatRoutes)
 app.use('/bids', bidRoutes)
 app.use('/support', supportRoutes)
+app.use('/wallet', walletRoutes)
 
 // Serve admin panel
 app.get('/admin-panel', (req, res) => {

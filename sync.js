@@ -9,6 +9,7 @@ const Review = require('./models/Review')
 const Message = require('./models/Message')
 const Bid = require('./models/Bid')
 const SupportTicket = require('./models/SupportTicket')
+const WalletTransaction = require('./models/WalletTransaction')
 
 async function syncDatabase() {
   try {
@@ -20,6 +21,7 @@ async function syncDatabase() {
     await Message.sync({ alter: true })
     await Bid.sync({ alter: true })
     await SupportTicket.sync({ alter: true })
+    await WalletTransaction.sync({ alter: true })
 
     console.log('All tables synchronized successfully! 🎉')
     process.exit(0)
