@@ -4,7 +4,6 @@ const adminAuth = require('../middleware/adminAuth')
 const User = require('../models/User')
 const TechnicianProfile = require('../models/TechnicianProfile')
 const Job = require('../models/Job')
-const Payment = require('../models/Payment')
 const Review = require('../models/Review')
 
 // GET /admin/dashboard
@@ -27,9 +26,6 @@ router.get('/dashboard', adminAuth, async (req, res) => {
     const completedJobs = await Job.count({
       where: { status: 'done' }
     })
-    const totalCommission = await Job.sum('commission_amount', {
-      where: { status: 'done' }
-    }) || 0
 
     res.json({
       success: true,
@@ -39,8 +35,7 @@ router.get('/dashboard', adminAuth, async (req, res) => {
         pendingApprovals,
         totalJobs,
         activeJobs,
-        completedJobs,
-        totalCommission
+        completedJobs
       }
     })
   } catch (error) {
@@ -206,34 +201,6 @@ router.get('/users/:id', adminAuth, async (req, res) => {
     }
 
     res.json({ success: true, user, jobs, techProfile })
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message })
-  }
-})
-
-// PUT /admin/users/:id/wallet
-// Manually adjust a user's wallet
-router.put('/users/:id/wallet', adminAuth, async (req, res) => {
-  try {
-    const { amount, type, description } = req.body
-    const user = await User.findByPk(req.params.id)
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' })
-
-    if (type === 'credit') {
-      await user.increment('wallet_balance', { by: amount })
-    } else {
-      await user.decrement('wallet_balance', { by: amount })
-    }
-
-    const WalletTransaction = require('../models/WalletTransaction')
-    await WalletTransaction.create({
-      user_id: user.id,
-      amount,
-      type,
-      description: description || 'Admin Adjustment'
-    })
-
-    res.json({ success: true, message: 'Wallet updated' })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }

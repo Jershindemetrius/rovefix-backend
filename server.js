@@ -25,24 +25,20 @@ sequelize.sync({ alter: true }).then(() => {
 const authRoutes = require('./routes/auth')
 const jobRoutes = require('./routes/jobs')
 const userRoutes = require('./routes/users')
-const paymentRoutes = require('./routes/payments')
 const adminRoutes = require('./routes/admin')
 const chatRoutes = require('./routes/chats')
 const bidRoutes = require('./routes/bids')
 const supportRoutes = require('./routes/support')
-const walletRoutes = require('./routes/wallet')
 const uploadRoutes = require('./routes/upload')
 
 // Register routes with a prefix
 app.use('/auth', authRoutes)
 app.use('/jobs', jobRoutes)
 app.use('/users', userRoutes)
-app.use('/payments', paymentRoutes)
 app.use('/admin', adminRoutes)
 app.use('/chats', chatRoutes)
 app.use('/bids', bidRoutes)
 app.use('/support', supportRoutes)
-app.use('/wallet', walletRoutes)
 app.use('/upload', uploadRoutes)
 
 // Debug Firebase

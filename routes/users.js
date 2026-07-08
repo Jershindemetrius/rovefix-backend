@@ -53,7 +53,7 @@ router.put('/profile', auth, async (req, res) => {
 router.get('/profile', auth, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified', 'wallet_balance', 'photo_url']
+      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified', 'photo_url']
     })
 
     let techProfile = null

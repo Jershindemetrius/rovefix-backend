@@ -68,12 +68,7 @@ const User = sequelize.define('User', {
   referred_by: {
     type: DataTypes.UUID,
     allowNull: true
-  },
-  wallet_balance: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
   }
-
 })
 
 module.exports = User

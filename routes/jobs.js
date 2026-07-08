@@ -145,21 +145,17 @@ router.put('/:id/accept', auth, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Job is no longer available' })
     }
 
-    // Calculate commission (10%)
+    // Get price
     const bidPrice = parseFloat(req.body.price)
     if (isNaN(bidPrice)) {
         return res.status(400).json({ success: false, message: 'Invalid price' })
     }
-    const commission = (bidPrice * 0.10).toFixed(2)
-    const payout = (bidPrice - commission).toFixed(2)
 
     // Update the job — assign this technician and change status
     await job.update({
       technician_id: req.user.id,
       status: 'matched',
-      price: bidPrice,
-      commission_amount: commission,
-      technician_payout: payout
+      price: bidPrice
     })
 
     // Notify homeowner
@@ -255,13 +251,9 @@ router.put('/:id/approve-quote', auth, async (req, res) => {
     if (isNaN(newPrice)) {
         return res.status(400).json({ success: false, message: 'Invalid quoted price' })
     }
-    const commission = (newPrice * 0.10).toFixed(2)
-    const payout = (newPrice - commission).toFixed(2)
 
     await job.update({
       price: newPrice,
-      commission_amount: commission,
-      technician_payout: payout,
       is_price_approved: true,
       status: 'in_progress'
     })

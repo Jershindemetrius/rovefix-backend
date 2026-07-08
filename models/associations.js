@@ -4,12 +4,10 @@
 const User = require('./User')
 const Job = require('./Job')
 const TechnicianProfile = require('./TechnicianProfile')
-const Payment = require('./Payment')
 const Review = require('./Review')
 const Message = require('./Message')
 const Bid = require('./Bid')
 const SupportTicket = require('./SupportTicket')
-const WalletTransaction = require('./WalletTransaction')
 
 // A job belongs to a homeowner (who is a User)
 Job.belongsTo(User, { foreignKey: 'homeowner_id', as: 'homeowner' })
@@ -23,10 +21,6 @@ User.hasMany(Job, { foreignKey: 'homeowner_id', as: 'posted_jobs' })
 // A technician profile belongs to a user
 TechnicianProfile.belongsTo(User, { foreignKey: 'user_id', as: 'user' })
 User.hasOne(TechnicianProfile, { foreignKey: 'user_id' })
-
-// A job has one payment
-Job.hasOne(Payment, { foreignKey: 'job_id' })
-Payment.belongsTo(Job, { foreignKey: 'job_id' })
 
 // A job can have reviews
 Job.hasMany(Review, { foreignKey: 'job_id' })
@@ -49,8 +43,4 @@ User.hasMany(Bid, { foreignKey: 'technician_id', as: 'my_bids' })
 User.hasMany(SupportTicket, { foreignKey: 'user_id', as: 'support_tickets' })
 SupportTicket.belongsTo(User, { foreignKey: 'user_id' })
 
-// Wallet System
-User.hasMany(WalletTransaction, { foreignKey: 'user_id', as: 'transactions' })
-WalletTransaction.belongsTo(User, { foreignKey: 'user_id' })
-
-module.exports = { User, Job, TechnicianProfile, Payment, Review, Message, Bid, SupportTicket, WalletTransaction }
+module.exports = { User, Job, TechnicianProfile, Review, Message, Bid, SupportTicket }

@@ -62,16 +62,6 @@ const Job = sequelize.define('Job', {
     allowNull: true                   // set by technician when they accept
   },
 
-  commission_amount: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
-  },
-
-  technician_payout: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0
-  },
-
   quoted_price: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true
