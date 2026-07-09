@@ -31,6 +31,9 @@ const bidRoutes = require('./routes/bids')
 const supportRoutes = require('./routes/support')
 const uploadRoutes = require('./routes/upload')
 
+// Serve static landing page and downloads
+app.use(express.static(path.join(__dirname, 'public')))
+
 // Register routes with a prefix
 app.use('/auth', authRoutes)
 app.use('/jobs', jobRoutes)
@@ -61,11 +64,6 @@ app.get('/debug-firebase', (req, res) => {
 // Serve admin panel
 app.get('/admin-panel', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin', 'index.html'))
-})
-
-// Test route
-app.get('/', (req, res) => {
-  res.send('Rovefix backend is running!')
 })
 
 const PORT = process.env.PORT || 3000

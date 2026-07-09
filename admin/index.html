@@ -124,11 +124,7 @@
             <!-- DASHBOARD VIEW -->
             <div id="view-dashboard" class="space-y-10 animate-fade-in">
                 <!-- Stats Row -->
-                <div class="grid grid-cols-4 gap-6">
-                    <div class="bg-admin-card p-8 rounded-3xl border border-white/5 card-hover transition-all">
-                        <p class="text-admin-muted text-xs font-bold uppercase tracking-widest">Gross Revenue</p>
-                        <h4 id="stat-revenue" class="text-3xl font-bold mt-2 tracking-tight">₹ 0.00</h4>
-                    </div>
+                <div class="grid grid-cols-3 gap-6">
                     <div class="bg-admin-card p-8 rounded-3xl border border-white/5 card-hover transition-all">
                         <p class="text-admin-muted text-xs font-bold uppercase tracking-widest">Active Jobs</p>
                         <h4 id="stat-jobs" class="text-3xl font-bold mt-2">0</h4>
@@ -144,7 +140,6 @@
                 </div>
 
                 <div class="grid grid-cols-3 gap-8">
-                    <!-- Recent Activity or charts could go here -->
                     <div class="col-span-2 bg-admin-card rounded-3xl border border-white/5 p-8">
                         <div class="flex items-center justify-between mb-8">
                             <h5 class="text-lg font-bold">System Health</h5>
@@ -154,7 +149,7 @@
                             <p class="flex gap-4"><span class="text-admin-success">[INFO]</span> Database connection established (Pooler node us-east-1)</p>
                             <p class="flex gap-4"><span class="text-admin-success">[INFO]</span> Auth module initialized with Firebase SDK 10.x</p>
                             <p class="flex gap-4"><span class="text-admin-accent">[ADM]</span> Dashboard accessed by System Root</p>
-                            <p class="flex gap-4"><span class="text-admin-success">[INFO]</span> 10% platform commission logic verified active</p>
+                            <p class="flex gap-4"><span class="text-admin-success">[INFO]</span> System optimized for reliable peer-to-peer matching</p>
                         </div>
                     </div>
                     <div class="bg-admin-card rounded-3xl border border-white/5 p-8 overflow-hidden relative">
@@ -164,7 +159,7 @@
                                 Approve Technicians
                             </button>
                             <button onclick="switchTab('users')" class="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white text-sm font-bold text-left hover:bg-white/10 transition-all">
-                                Manage User Wallets
+                                View User Directory
                             </button>
                             <button class="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white text-sm font-bold text-left opacity-30 cursor-not-allowed">
                                 System Reports (Coming Soon)
@@ -230,32 +225,16 @@
                     <p id="modalUserId" class="text-admin-muted text-xs font-mono opacity-50 mt-1">ID: ...</p>
                     <div id="modalBadges" class="mt-2 flex gap-2"></div>
                 </div>
-                <div class="text-right">
-                    <p class="text-admin-muted text-[10px] font-bold uppercase tracking-widest">Current Balance</p>
-                    <h3 id="modalBalance" class="text-2xl font-bold text-admin-success mt-1">₹ 0.00</h3>
-                </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-8 pt-4">
+            <div class="grid grid-cols-1 pt-4">
                 <div class="space-y-4">
-                    <h5 class="text-xs font-bold text-admin-muted uppercase tracking-widest flex items-center gap-2">
-                        <i class="fa-solid fa-wallet text-admin-accent"></i> Wallet Adjustment
-                    </h5>
-                    <div class="flex gap-2">
-                        <input type="number" id="walletAmount" placeholder="Amount" class="flex-1 p-4 rounded-xl text-lg font-bold">
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="adjustWallet('credit')" class="p-3 bg-admin-success/10 text-admin-success border border-admin-success/20 rounded-xl font-bold text-xs hover:bg-admin-success hover:text-black transition-all">CREDIT (+)</button>
-                        <button onclick="adjustWallet('debit')" class="p-3 bg-admin-error/10 text-admin-error border border-admin-error/20 rounded-xl font-bold text-xs hover:bg-admin-error hover:text-white transition-all">DEBIT (-)</button>
-                    </div>
-                </div>
-                <div class="space-y-4 border-l border-white/5 pl-8">
                     <h5 class="text-xs font-bold text-admin-muted uppercase tracking-widest flex items-center gap-2">
                         <i class="fa-solid fa-shield-halved text-admin-error"></i> System Integrity
                     </h5>
                     <div class="p-4 bg-admin-error/5 border border-admin-error/10 rounded-2xl">
-                        <p class="text-[11px] text-admin-muted leading-relaxed">Permanently ban this user. All active bids and jobs will be terminated immediately.</p>
-                        <button onclick="banUser()" class="w-full mt-4 p-3 bg-admin-error text-white rounded-xl font-bold text-xs hover:shadow-lg hover:shadow-admin-error/20 transition-all uppercase">Execute System Ban</button>
+                        <p class="text-[11px] text-admin-muted leading-relaxed">Permanently remove this user. All active bids and jobs will be terminated immediately.</p>
+                        <button onclick="banUser()" class="w-full mt-4 p-3 bg-admin-error text-white rounded-xl font-bold text-xs hover:shadow-lg hover:shadow-admin-error/20 transition-all uppercase">Execute System Purge</button>
                     </div>
                 </div>
             </div>
@@ -322,7 +301,6 @@
             .then(data => {
                 if (data.success) {
                     const s = data.stats;
-                    document.getElementById('stat-revenue').textContent = `₹${s.totalCommission.toFixed(2)}`;
                     document.getElementById('stat-jobs').textContent = s.activeJobs;
                     document.getElementById('stat-users').textContent = (s.totalUsers + s.totalTechnicians);
                     document.getElementById('stat-pending').textContent = s.pendingApprovals;
@@ -349,7 +327,7 @@
         let endpoint = '';
         if (type === 'users') {
             endpoint = '/users';
-            head.innerHTML = '<th class="p-6">User Details</th><th class="p-6">Type</th><th class="p-6">Balance</th><th class="p-6">Status</th><th class="p-6 text-right">Registered</th>';
+            head.innerHTML = '<th class="p-6">User Details</th><th class="p-6">Type</th><th class="p-6">Status</th><th class="p-6 text-right">Registered</th>';
         } else if (type === 'pending') {
             endpoint = '/technicians/pending';
             head.innerHTML = '<th class="p-6">Candidate</th><th class="p-6">Category</th><th class="p-6">ID Document</th><th class="p-6 text-right">Actions</th>';
@@ -385,7 +363,6 @@
                                 <td class="p-6">
                                     <span class="px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${item.user_type === 'technician' ? 'bg-admin-accent/20 text-admin-accent' : 'bg-admin-success/20 text-admin-success'}">${item.user_type}</span>
                                 </td>
-                                <td class="p-6 font-bold text-white">₹${item.wallet_balance.toFixed(2)}</td>
                                 <td class="p-6">
                                     <div class="flex items-center gap-2">
                                         <div class="w-2 h-2 rounded-full ${item.is_verified ? 'bg-admin-success' : 'bg-admin-error'}"></div>
@@ -442,7 +419,6 @@
         document.getElementById('modalTitle').textContent = `Command: ${user.user_type.toUpperCase()}`;
         document.getElementById('modalUserName').textContent = user.name;
         document.getElementById('modalUserId').textContent = `System Cluster UID: ${user.id}`;
-        document.getElementById('modalBalance').textContent = `₹${user.wallet_balance.toFixed(2)}`;
         document.getElementById('modalAvatar').textContent = user.name.charAt(0);
 
         const badges = document.getElementById('modalBadges');
@@ -457,25 +433,6 @@
     function closeModal() {
         document.getElementById('userModal').classList.add('hidden');
         selectedUserId = null;
-    }
-
-    function adjustWallet(type) {
-        const amt = document.getElementById('walletAmount').value;
-        if (!amt || amt <= 0) return alert("Invalid amount parameter.");
-
-        if (!confirm(`Confirm ${type.toUpperCase()} adjustment of ₹${amt}?`)) return;
-
-        fetch(`${API_URL}/users/${selectedUserId}/wallet`, {
-            method: 'PUT',
-            headers: { 'Authorization': currentAuthKey, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ amount: parseFloat(amt), type, description: 'Command Center Manual Override' })
-        }).then(res => res.json()).then(data => {
-            if (data.success) {
-                alert("Sequence Successful.");
-                closeModal();
-                reloadData();
-            }
-        });
     }
 
     function banUser() {

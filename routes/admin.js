@@ -152,7 +152,7 @@ router.get('/users', adminAuth, async (req, res) => {
 
     const users = await User.findAll({
       where,
-      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified', 'wallet_balance', 'createdAt'],
+      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified', 'createdAt'],
       order: [['createdAt', 'DESC']],
       limit: 100
     })
@@ -171,7 +171,7 @@ router.get('/technicians', adminAuth, async (req, res) => {
       include: [{
         model: User,
         as: 'user',
-        attributes: ['id', 'name', 'phone', 'city', 'is_verified', 'wallet_balance', 'createdAt']
+        attributes: ['id', 'name', 'phone', 'city', 'is_verified', 'createdAt']
       }],
       order: [['createdAt', 'DESC']]
     })
