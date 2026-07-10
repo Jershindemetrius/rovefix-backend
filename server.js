@@ -34,6 +34,17 @@ const uploadRoutes = require('./routes/upload')
 // Serve static landing page and downloads
 app.use(express.static(path.join(__dirname, 'public')))
 
+// Manual APK Download Route (Safety Fallback)
+app.get('/downloads/rovefix.apk', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'downloads', 'rovefix.apk')
+  res.download(filePath, 'rovefix.apk', (err) => {
+    if (err) {
+      console.error('Download failed:', err)
+      res.status(404).send('APK file not found on server. Ensure you have pushed the "public/downloads/rovefix.apk" file to GitHub.')
+    }
+  })
+})
+
 // Register routes with a prefix
 app.use('/auth', authRoutes)
 app.use('/jobs', jobRoutes)

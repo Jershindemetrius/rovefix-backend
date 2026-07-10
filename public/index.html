@@ -3,16 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rovefix | Trusted Home Services on Demand</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>Rovefix | Professional Home Services On-Demand</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
             --primary: #1A73E8;
+            --primary-dark: #1557B0;
             --secondary: #34A853;
+            --accent: #FB8C00;
             --dark: #000000;
-            --gray: #F8F9FA;
+            --light-bg: #F8F9FA;
+            --white: #FFFFFF;
             --text-main: #202124;
             --text-muted: #5F6368;
+            --border: #EDEDED;
         }
 
         * {
@@ -23,74 +28,122 @@
         }
 
         body {
-            background-color: #FFFFFF;
+            background-color: var(--white);
             color: var(--text-main);
             line-height: 1.6;
             overflow-x: hidden;
+            scroll-behavior: smooth;
         }
 
+        /* --- Navbar --- */
         .navbar {
-            padding: 20px 8%;
+            padding: 16px 8%;
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
         }
 
-        .logo {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--primary);
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--dark);
             letter-spacing: -0.5px;
         }
 
-        .hero {
-            padding: 80px 8% 120px;
+        .nav-links {
             display: flex;
-            align-items: center;
-            background: linear-gradient(135deg, #F0F4FF 0%, #FFFFFF 100%);
+            gap: 32px;
         }
 
-        .hero-content {
-            flex: 1;
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--primary); }
+
+        /* --- Hero --- */
+        .hero {
+            padding: 100px 8% 140px;
+            display: flex;
+            align-items: center;
+            background: radial-gradient(circle at 90% 10%, #E8F0FE 0%, #FFFFFF 50%);
+        }
+
+        .hero-content { flex: 1.2; }
+
+        .badge-new {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #E8F0FE;
+            color: var(--primary);
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 24px;
         }
 
         .hero-title {
-            font-size: 56px;
+            font-size: 64px;
             font-weight: 800;
             line-height: 1.1;
-            margin-bottom: 24px;
+            margin-bottom: 28px;
             color: var(--dark);
         }
 
-        .hero-title span {
-            color: var(--primary);
-        }
+        .hero-title span { color: var(--primary); }
 
         .hero-desc {
             font-size: 20px;
             color: var(--text-muted);
-            margin-bottom: 40px;
-            max-width: 500px;
+            margin-bottom: 48px;
+            max-width: 580px;
         }
 
-        .download-buttons {
+        .cta-group {
             display: flex;
-            gap: 16px;
+            align-items: center;
+            gap: 24px;
         }
 
         .btn {
-            padding: 18px 32px;
-            border-radius: 14px;
+            padding: 20px 36px;
+            border-radius: 16px;
             text-decoration: none;
             font-weight: 700;
             font-size: 16px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -98,151 +151,300 @@
 
         .btn-primary {
             background: var(--dark);
-            color: white;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            color: var(--white);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            background: #111;
         }
 
-        .stats {
-            padding: 80px 8%;
+        /* --- Trust Bar --- */
+        .trust-bar {
+            padding: 40px 8%;
+            background: var(--light-bg);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .trust-item i { color: var(--secondary); font-size: 18px; }
+
+        /* --- Sections --- */
+        .section { padding: 100px 8%; }
+        .section-header { text-align: center; margin-bottom: 70px; }
+        .section-header h2 { font-size: 36px; font-weight: 800; margin-bottom: 16px; }
+        .section-header p { color: var(--text-muted); font-size: 18px; max-width: 600px; margin: 0 auto; }
+
+        /* --- How It Works --- */
+        .work-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 40px;
+        }
+
+        .step-card {
             text-align: center;
+            padding: 40px;
+            background: var(--white);
+            border-radius: 24px;
+            transition: transform 0.3s;
         }
+        .step-card:hover { transform: translateY(-10px); }
 
-        .stat-card h3 {
-            font-size: 36px;
-            color: var(--primary);
-            margin-bottom: 8px;
-        }
-
-        .features {
-            padding: 100px 8%;
-            background: white;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-
-        .section-header h2 {
-            font-size: 32px;
+        .step-num {
+            width: 56px;
+            height: 56px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 18px;
             font-weight: 800;
+            margin: 0 auto 24px;
+            font-size: 20px;
+            box-shadow: 0 10px 20px rgba(26, 115, 232, 0.2);
         }
 
-        .feature-grid {
+        .step-card h4 { font-size: 22px; margin-bottom: 12px; font-weight: 700; color: var(--dark); }
+        .step-card p { color: var(--text-muted); font-size: 16px; }
+
+        /* --- Features --- */
+        .feature-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 32px;
+            gap: 30px;
         }
 
         .f-card {
-            padding: 40px;
-            background: var(--gray);
-            border-radius: 24px;
-            border: 1px solid #EDEDED;
+            padding: 48px;
+            background: var(--light-bg);
+            border-radius: 32px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
         }
 
-        .f-icon {
-            font-size: 32px;
-            margin-bottom: 20px;
+        .f-card:hover {
+            background: var(--white);
+            border-color: var(--primary);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.05);
         }
 
-        .f-card h4 {
-            font-size: 20px;
-            margin-bottom: 12px;
+        .f-icon-box {
+            width: 64px;
+            height: 64px;
+            background: var(--white);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 28px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.04);
         }
 
-        .f-card p {
+        /* --- Categories --- */
+        .category-strip {
+            display: flex;
+            gap: 16px;
+            margin-top: 40px;
+            flex-wrap: wrap;
+        }
+        .cat-tag {
+            padding: 10px 20px;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
             color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
+        /* --- Footer --- */
         .footer {
-            padding: 60px 8%;
+            padding: 100px 8% 40px;
             background: var(--dark);
-            color: white;
-            text-align: center;
+            color: var(--white);
         }
 
-        @media (max-width: 768px) {
-            .hero {
-                flex-direction: column;
-                text-align: center;
-                padding-top: 40px;
-            }
-            .hero-title { font-size: 40px; }
-            .download-buttons { justify-content: center; }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 80px;
+            margin-bottom: 80px;
+        }
+
+        .footer-logo { font-size: 26px; font-weight: 800; color: var(--white); margin-bottom: 24px; display: block; text-decoration: none; }
+        .footer-desc { color: #888; font-size: 15px; max-width: 320px; line-height: 1.8; }
+        .footer-head { font-weight: 700; margin-bottom: 28px; font-size: 16px; color: var(--white); text-transform: uppercase; letter-spacing: 1px; }
+        .footer-links { list-style: none; }
+        .footer-links li { margin-bottom: 16px; }
+        .footer-links a { color: #888; text-decoration: none; font-size: 15px; transition: color 0.2s; }
+        .footer-links a:hover { color: var(--white); }
+
+        .copyright {
+            padding-top: 40px;
+            border-top: 1px solid #222;
+            text-align: center;
+            color: #555;
+            font-size: 14px;
+        }
+
+        @media (max-width: 1024px) {
+            .hero { flex-direction: column; text-align: center; padding-top: 60px; }
             .hero-desc { margin-left: auto; margin-right: auto; }
-            .stats { grid-template-columns: 1fr; }
+            .cta-group { justify-content: center; }
+            .category-strip { justify-content: center; }
+            .work-grid { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr; gap: 60px; text-align: center; }
+            .footer-desc { margin: 0 auto; }
         }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
-        <a href="#" class="logo">Rovefix</a>
+        <a href="#" class="logo-group">
+            <div class="logo-icon">R</div>
+            <span class="logo-text">Rovefix</span>
+        </a>
+        <div class="nav-links">
+            <a href="#how">Process</a>
+            <a href="#features">Security</a>
+            <a href="#services">Services</a>
+        </div>
     </nav>
 
     <section class="hero">
         <div class="hero-content">
-            <h1 class="hero-title">Home Service<br><span>Simplified.</span></h1>
-            <p class="hero-desc">The most trusted platform to find certified professionals for all your home repair and maintenance needs.</p>
+            <div class="badge-new">
+                <i class="fa-solid fa-shield-check"></i> Enterprise Grade Home Security
+            </div>
+            <h1 class="hero-title">Home Maintenance<br><span>Revolutionized.</span></h1>
+            <p class="hero-desc">Rovefix connects you with top-tier, background-verified professionals for all your home repair needs. Real-time matching, transparent pricing, zero hassle.</p>
 
-            <div class="download-buttons">
-                <a href="/downloads/rovefix.apk" class="btn btn-primary">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <div class="cta-group">
+                <a href="/downloads/rovefix.apk" class="btn btn-primary" download>
+                    <i class="fa-brands fa-android"></i>
                     Download for Android (APK)
                 </a>
             </div>
+
+            <div class="category-strip" id="services">
+                <div class="cat-tag">⚡ Electrician</div>
+                <div class="cat-tag">🔧 Plumber</div>
+                <div class="cat-tag">❄️ AC Repair</div>
+                <div class="cat-tag">📱 Device Fix</div>
+                <div class="cat-tag">🪚 Carpenter</div>
+            </div>
         </div>
     </section>
 
-    <section class="stats">
-        <div class="stat-card">
-            <h3>50+</h3>
-            <p>Certified Technicians</p>
-        </div>
-        <div class="stat-card">
-            <h3>100%</h3>
-            <p>Secure Payments</p>
-        </div>
-        <div class="stat-card">
-            <h3>24/7</h3>
-            <p>Emergency Support</p>
-        </div>
-    </section>
+    <div class="trust-bar">
+        <div class="trust-item"><i class="fa-solid fa-badge-check"></i> ISO 9001 Certified Quality</div>
+        <div class="trust-item"><i class="fa-solid fa-lock-keyhole"></i> 256-bit Encrypted Chats</div>
+        <div class="trust-item"><i class="fa-solid fa-user-check"></i> ID Verified Professionals</div>
+        <div class="trust-item"><i class="fa-solid fa-star"></i> 4.8/5 Customer Rating</div>
+    </div>
 
-    <section class="features">
+    <section class="section" id="how">
         <div class="section-header">
-            <h2>Why choose Rovefix?</h2>
+            <h2>The Rovefix Method</h2>
+            <p>We've streamlined the service industry to put you in control.</p>
         </div>
-        <div class="feature-grid">
+        <div class="work-grid">
+            <div class="step-card">
+                <div class="step-num">1</div>
+                <h4>Request Service</h4>
+                <p>Post your requirement with photos. Our algorithm instantly alerts nearby experts in your category.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">2</div>
+                <h4>Competitive Bidding</h4>
+                <p>Verified technicians provide transparent quotes. Compare profiles, ratings, and past work before you hire.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-num">3</div>
+                <h4>Secure Completion</h4>
+                <p>Track the professional's arrival, chat securely, and mark the job done only when you're 100% satisfied.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="features" style="background: #FAFAFA;">
+        <div class="section-header">
+            <h2>Trust Infrastructure</h2>
+            <p>Your safety and satisfaction are baked into every line of our code.</p>
+        </div>
+        <div class="feature-container">
             <div class="f-card">
-                <div class="f-icon">⚡</div>
-                <h4>Instant Matching</h4>
-                <p>Post a job and get bids from top-rated professionals in your area within minutes.</p>
+                <div class="f-icon-box" style="color: #1A73E8;"><i class="fa-solid fa-id-card-clip"></i></div>
+                <h4>Rigorous Verification</h4>
+                <p>Technicians undergo a mandatory 5-step background check, including Aadhaar authentication and physical document review by our admin team.</p>
             </div>
             <div class="f-card">
-                <div class="f-icon">🛡️</div>
-                <h4>Verified Experts</h4>
-                <p>Every technician undergoes a rigorous multi-step background and ID verification process.</p>
+                <div class="f-icon-box" style="color: #34A853;"><i class="fa-solid fa-handshake-angle"></i></div>
+                <h4>Instant Expert Matching</h4>
+                <p>Our proprietary matching engine ensures you only see professionals who are currently online and within a 10km radius for rapid response.</p>
             </div>
             <div class="f-card">
-                <div class="f-icon">💬</div>
-                <h4>Real-time Chat</h4>
-                <p>Communicate directly with your service provider inside the app for complete transparency.</p>
+                <div class="f-icon-box" style="color: #FB8C00;"><i class="fa-solid fa-images"></i></div>
+                <h4>Digital Work Ledger</h4>
+                <p>Maintain a complete history of your repairs with before/after photos stored securely in our cloud-link engine for future reference.</p>
+            </div>
+            <div class="f-card">
+                <div class="f-icon-box" style="color: #E53935;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <h4>Dispute Protection</h4>
+                <p>Integrated reporting system allows you to flag any issues directly to the system administrators for immediate mediation.</p>
             </div>
         </div>
     </section>
 
     <footer class="footer">
-        <p>&copy; 2026 Rovefix Technologies. All rights reserved.</p>
+        <div class="footer-grid">
+            <div>
+                <a href="#" class="footer-logo">Rovefix</a>
+                <p class="footer-desc">The next generation of home service marketplaces. Built on trust, powered by technology, and dedicated to your home's comfort.</p>
+            </div>
+            <div>
+                <h5 class="footer-head">Company</h5>
+                <ul class="footer-links">
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Safety Standards</a></li>
+                    <li><a href="#">Technician Hub</a></li>
+                </ul>
+            </div>
+            <div>
+                <h5 class="footer-head">Legal</h5>
+                <ul class="footer-links">
+                    <li><a href="#">User Agreement</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Service Terms</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="copyright">
+            &copy; 2026 Rovefix Technologies. Developed by Zanvis Dev for modern living.
+        </div>
     </footer>
 
 </body>
