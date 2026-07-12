@@ -34,15 +34,10 @@ const uploadRoutes = require('./routes/upload')
 // Serve static landing page and downloads
 app.use(express.static(path.join(__dirname, 'public')))
 
-// Manual APK Download Route (Safety Fallback)
+// Manual APK Download Route (Safety Redirect to GitHub)
 app.get('/downloads/rovefix.apk', (req, res) => {
-  const filePath = path.join(__dirname, 'public', 'downloads', 'rovefix.apk')
-  res.download(filePath, 'rovefix.apk', (err) => {
-    if (err) {
-      console.error('Download failed:', err)
-      res.status(404).send('APK file not found on server. Ensure you have pushed the "public/downloads/rovefix.apk" file to GitHub.')
-    }
-  })
+  // Redirecting to your official GitHub APK host for maximum reliability
+  res.redirect('https://github.com/Jershindemetrius/rovefix-backend/raw/93428ee9cc2475fe48389eeb7c4512739c34bf96/public/downloads/Rovefix.apk')
 })
 
 // Register routes with a prefix

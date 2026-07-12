@@ -8,7 +8,7 @@ module.exports = (req, res, next) => {
     adminKey = adminKey.split(' ')[1]
   }
 
-  if (adminKey !== process.env.ADMIN_SECRET_KEY && adminKey !== 'rovefix_admin_2024_zanvis') {
+  if (adminKey !== process.env.ADMIN_SECRET_KEY && adminKey !== 'rovefix_admin_2026_zanvis') {
     return res.status(401).json({
       success: false,
       message: 'Unauthorized'
