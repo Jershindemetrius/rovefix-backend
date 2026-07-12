@@ -36,7 +36,8 @@ app.use(express.static(path.join(__dirname, 'public')))
 
 // ⚡ HIGH-SPEED DIRECT APK DOWNLOAD
 app.get('/downloads/rovefix.apk', (req, res) => {
-  res.redirect('https://github.com/Jershindemetrius/rovefix-backend/raw/main/public/downloads/Rovefix.apk');
+  // Redirecting to your Terabox Storage link
+  res.redirect('https://1024terabox.com/s/1qgs0jQMZQu-ghfuWSOeGBw');
 });
 
 // Register routes with a prefix
