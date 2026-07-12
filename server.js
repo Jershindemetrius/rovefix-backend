@@ -34,10 +34,22 @@ const uploadRoutes = require('./routes/upload')
 // Serve static landing page and downloads
 app.use(express.static(path.join(__dirname, 'public')))
 
-// ⚡ HIGH-SPEED DIRECT APK DOWNLOAD
-app.get('/downloads/rovefix.apk', (req, res) => {
-  // Redirecting to your Terabox Storage link
-  res.redirect('https://1024terabox.com/s/1qgs0jQMZQu-ghfuWSOeGBw');
+// ⚡ PROFESSIONAL APK DISTRIBUTION ENGINE
+// This serves the APK directly from your own server (High Trust)
+app.get('/download-app', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'downloads', 'Rovefix.apk');
+
+  // 1. Force the browser to treat this as an Android App
+  res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+
+  // 2. Start an immediate download dialog
+  res.download(filePath, 'Rovefix_Official.apk', (err) => {
+    if (err) {
+      console.error('Local File Error:', err.message);
+      // Safety Fallback: Use your GitHub Release link for maximum stability
+      res.redirect('https://github.com/Jershindemetrius/rovefix-backend/releases/download/v1.0.0/Rovefix.apk');
+    }
+  });
 });
 
 // Register routes with a prefix
