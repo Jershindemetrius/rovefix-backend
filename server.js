@@ -35,17 +35,8 @@ const uploadRoutes = require('./routes/upload')
 app.use(express.static(path.join(__dirname, 'public')))
 
 // ⚡ HIGH-SPEED DIRECT APK DOWNLOAD
-// This allows anyone to download the app without a GitHub account
 app.get('/downloads/rovefix.apk', (req, res) => {
-  const filePath = path.join(__dirname, 'public', 'downloads', 'rovefix.apk');
-
-  res.download(filePath, 'Rovefix_Official.apk', (err) => {
-    if (err) {
-      // Fallback: If file isn't on Render yet, redirect to your GitHub Raw link
-      // Use 'raw' instead of 'blob' so it downloads immediately
-      res.redirect('https://github.com/Jershindemetrius/rovefix-backend/raw/main/public/downloads/rovefix.apk');
-    }
-  });
+  res.redirect('https://github.com/Jershindemetrius/rovefix-backend/raw/main/public/downloads/Rovefix.apk');
 });
 
 // Register routes with a prefix
