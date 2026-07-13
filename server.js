@@ -20,11 +20,11 @@ app.get('/health', (req, res) => {
 // Update notice system
 app.get('/app-version', (req, res) => {
   res.json({
-    latest_version_code: 2, // Increment this when you release a new APK
-    latest_version_name: "1.0.1",
-    update_required: false, // Set to true to force users to update
-    download_url: "https://rovefix-backend.onrender.com/download-app",
-    release_notes: "Improved reliability and fixed upload issues."
+    latest_version_code: 1, // Start with 1 for your first release
+    latest_version_name: "1.0.0",
+    update_required: false,
+    download_url: "https://github.com/Jershindemetrius/rovefix-backend/releases/download/v1.0.0/Rovefix.apk",
+    release_notes: "Official Launch of Rovefix! Experience secure PIN login and reliable home services."
   })
 })
 
