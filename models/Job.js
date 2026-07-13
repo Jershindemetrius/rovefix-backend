@@ -33,8 +33,8 @@ const Job = sequelize.define('Job', {
   },
 
   photo_url: {
-    type: DataTypes.STRING,
-    allowNull: true         // optional photo of the problem
+    type: DataTypes.TEXT,
+    allowNull: true         // Changed to TEXT to support Base64 strings
   },
 
   location: {

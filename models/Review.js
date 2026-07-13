@@ -37,8 +37,8 @@ const Review = sequelize.define('Review', {
   },
 
   work_photo_url: {
-    type: DataTypes.STRING,
-    allowNull: true     // photo of completed work (builds trust for future users)
+    type: DataTypes.TEXT,
+    allowNull: true     // Changed to TEXT for Base64 support
   }
 
 })

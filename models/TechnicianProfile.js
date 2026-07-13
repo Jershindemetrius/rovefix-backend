@@ -23,8 +23,8 @@ const TechnicianProfile = sequelize.define('TechnicianProfile', {
   },
 
   id_doc_url: {
-    type: DataTypes.STRING,
-    allowNull: true     // URL of their Aadhaar / voter card photo
+    type: DataTypes.TEXT,
+    allowNull: true     // Changed to TEXT for Base64 support
   },
 
   approved: {
