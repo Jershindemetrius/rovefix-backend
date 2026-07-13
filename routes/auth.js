@@ -1,67 +1,102 @@
-// This file handles login
-// Firebase already sends the OTP to the user's phone
-// Our job here is just to verify the Firebase token and create the user in our database
-
 const express = require('express')
 const router = express.Router()
 const jwt = require('jsonwebtoken')
-const firebaseAdmin = require('../firebase-admin') // we'll create this file next
+const bcrypt = require('bcrypt')
+const firebaseAdmin = require('../firebase-admin')
 const User = require('../models/User')
 const { generateReferralCode } = require('../utils/referral')
 
-// POST /auth/verify
-// Called after user enters OTP successfully in the app
-// App sends the Firebase token, we verify it and return our own JWT
-router.post('/verify', async (req, res) => {
+// --- DEBUG ROUTE ---
+router.get('/ping', (req, res) => {
+  res.json({ success: true, message: 'Auth engine is running' })
+})
+
+// --- PIN-BASED AUTH (NEW) ---
+
+// POST /auth/register
+router.post('/register', async (req, res) => {
   try {
-    const { firebase_token, name, user_type, city, referral_code_used } = req.body
-    // firebase_token  — sent from the Android app after OTP success
-    // name, user_type, city — basic info the user filled in
+    const { phone, pin, name, user_type, referral_code_used } = req.body
+    console.log('[Auth] Registering:', phone)
 
-    // Step 1: verify the Firebase token is real and not fake
-    const decoded = await firebaseAdmin.auth().verifyIdToken(firebase_token)
-    const phone = decoded.phone_number  // get the phone number from the token
-    const firebase_uid = decoded.uid    // unique Firebase ID for this user
-
-    // Step 2: check if this user already exists in our database
-    let user = await User.findOne({ where: { firebase_uid } })
-
-    if (!user) {
-      // New user — create them in our database
-
-      // Handle referral logic
-      let referredByUserId = null
-      if (referral_code_used) {
-        const referrer = await User.findOne({ where: { referral_code: referral_code_used.toUpperCase() } })
-        if (referrer) {
-          referredByUserId = referrer.id
-        }
-      }
-
-      user = await User.create({
-        name: name || 'User',
-        phone,
-        user_type,
-        city: city || '',
-        firebase_uid,
-        is_verified: false,
-        referral_code: generateReferralCode(name || 'RV'),
-        referred_by: referredByUserId
-      })
+    if (!phone || !pin || pin.length !== 6) {
+      return res.status(400).json({ success: false, message: 'Invalid phone or 6-digit PIN' })
     }
 
-    // Step 3: create our own JWT token to send back to the app
-    // The app will store this and send it with every future request
+    // Check if user exists
+    const existingUser = await User.findOne({ where: { phone } })
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Phone number already registered' })
+    }
+
+    // Hash the PIN
+    const hashedPin = await bcrypt.hash(pin, 10)
+
+    // Handle referral logic
+    let referredByUserId = null
+    if (referral_code_used) {
+      const referrer = await User.findOne({ where: { referral_code: referral_code_used.toUpperCase() } })
+      if (referrer) referredByUserId = referrer.id
+    }
+
+    const user = await User.create({
+      name: name || 'User',
+      phone,
+      pin: hashedPin,
+      user_type: user_type || 'homeowner',
+      referral_code: generateReferralCode(name || 'RV'),
+      referred_by: referredByUserId,
+      is_verified: true
+    })
+
     const token = jwt.sign(
-      { id: user.id, user_type: user.user_type },  // data stored inside the token
-      process.env.JWT_SECRET,                        // secret key from .env
-      { expiresIn: '30d' }                           // token expires in 30 days
+      { id: user.id, user_type: user.user_type },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
     )
 
-    // Check if profile is complete (name is set and not default placeholder)
+    res.json({
+      success: true,
+      token,
+      is_profile_complete: false,
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        user_type: user.user_type,
+        referral_code: user.referral_code
+      }
+    })
+  } catch (error) {
+    console.error('[Auth] Registration error:', error)
+    res.status(500).json({ success: false, message: 'Registration failed' })
+  }
+})
+
+// POST /auth/login
+router.post('/login', async (req, res) => {
+  try {
+    const { phone, pin } = req.body
+    console.log('[Auth] Login attempt:', phone)
+
+    const user = await User.findOne({ where: { phone } })
+    if (!user || !user.pin) {
+      return res.status(404).json({ success: false, message: 'User not found or PIN not set' })
+    }
+
+    const isMatch = await bcrypt.compare(pin, user.pin)
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid 6-digit PIN' })
+    }
+
+    const token = jwt.sign(
+      { id: user.id, user_type: user.user_type },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    )
+
     const isProfileComplete = user.name && user.name !== 'User' && user.city
 
-    // Send back the token and user info to the app
     res.json({
       success: true,
       token,
@@ -75,27 +110,52 @@ router.post('/verify', async (req, res) => {
         referral_code: user.referral_code
       }
     })
-
   } catch (error) {
-    console.error('Auth error detail:', error)
+    console.error('[Auth] Login error:', error)
+    res.status(500).json({ success: false, message: 'Login failed' })
+  }
+})
 
-    let userHint = 'Ensure your app and backend use the same Firebase project.'
-    if (error.code === 'auth/id-token-expired') {
-      userHint = 'The session has expired. Please try sending a new OTP.'
-    } else if (error.code === 'auth/argument-error') {
-      userHint = 'Invalid token format. Please restart the app and try again.'
-    } else if (error.message.includes('aud')) {
-      userHint = 'Project Mismatch! Your app and backend are using different Firebase projects.'
+// Legacy OTP verify (optional)
+router.post('/verify', async (req, res) => {
+  try {
+    const { firebase_token, name, user_type, city, referral_code_used } = req.body
+    const decoded = await firebaseAdmin.auth().verifyIdToken(firebase_token)
+    const phone = decoded.phone_number
+    const firebase_uid = decoded.uid
+
+    let user = await User.findOne({ where: { firebase_uid } })
+    if (!user) {
+      user = await User.create({
+        name: name || 'User',
+        phone,
+        user_type,
+        city: city || '',
+        firebase_uid,
+        is_verified: false,
+        referral_code: generateReferralCode(name || 'RV')
+      })
     }
 
-    res.status(401).json({
-      success: false,
-      message: error.message || 'Verification failed',
-      code: error.code || 'no_code',
-      hint: userHint,
-      technical_details: error.message,
-      firebase_error_code: error.code
+    const token = jwt.sign(
+      { id: user.id, user_type: user.user_type },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    )
+
+    res.json({
+      success: true,
+      token,
+      is_profile_complete: !!(user.name && user.name !== 'User' && user.city),
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        user_type: user.user_type
+      }
     })
+  } catch (error) {
+    res.status(401).json({ success: false, message: 'Verification failed' })
   }
 })
 

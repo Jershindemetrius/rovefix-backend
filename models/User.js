@@ -23,6 +23,11 @@ const User = sequelize.define('User', {
     unique: true              // no two users can have the same phone number
   },
 
+  pin: {
+    type: DataTypes.STRING,   // Hashed 6-digit PIN
+    allowNull: true           // Null for old users, required for new ones
+  },
+
   email: {
     type: DataTypes.STRING,
     allowNull: true,          // email is optional

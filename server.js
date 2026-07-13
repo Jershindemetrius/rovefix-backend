@@ -7,6 +7,16 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+// --- MONITORING & SCALABILITY ---
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'online',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    engine: 'Rovefix v1.0.1'
+  })
+})
+
 // Connect to database
 require('./database')
 
@@ -31,28 +41,7 @@ const bidRoutes = require('./routes/bids')
 const supportRoutes = require('./routes/support')
 const uploadRoutes = require('./routes/upload')
 
-// Serve static landing page and downloads
-app.use(express.static(path.join(__dirname, 'public')))
-
-// ⚡ PROFESSIONAL APK DISTRIBUTION ENGINE
-// This serves the APK directly from your own server (High Trust)
-app.get('/download-app', (req, res) => {
-  const filePath = path.join(__dirname, 'public', 'downloads', 'Rovefix.apk');
-
-  // 1. Force the browser to treat this as an Android App
-  res.setHeader('Content-Type', 'application/vnd.android.package-archive');
-
-  // 2. Start an immediate download dialog
-  res.download(filePath, 'Rovefix_Official.apk', (err) => {
-    if (err) {
-      console.error('Local File Error:', err.message);
-      // Safety Fallback: Use your GitHub Release link for maximum stability
-      res.redirect('https://github.com/Jershindemetrius/rovefix-backend/releases/download/v1.0.0/Rovefix.apk');
-    }
-  });
-});
-
-// Register routes with a prefix
+// Register API routes BEFORE static files (Best Practice)
 app.use('/auth', authRoutes)
 app.use('/jobs', jobRoutes)
 app.use('/users', userRoutes)
@@ -61,6 +50,21 @@ app.use('/chats', chatRoutes)
 app.use('/bids', bidRoutes)
 app.use('/support', supportRoutes)
 app.use('/upload', uploadRoutes)
+
+// Serve static landing page and downloads
+app.use(express.static(path.join(__dirname, 'public')))
+
+// ⚡ PROFESSIONAL APK DISTRIBUTION ENGINE
+
+// --- GLOBAL ERROR HANDLER (Reliability) ---
+app.use((err, req, res, next) => {
+  console.error('[Global Error]', err.stack)
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal Server Error',
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  })
+})
 
 // Debug Firebase
 app.get('/debug-firebase', (req, res) => {
