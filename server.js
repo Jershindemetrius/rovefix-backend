@@ -7,13 +7,24 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-// --- MONITORING & SCALABILITY ---
+// --- MONITORING & UPDATES ---
 app.get('/health', (req, res) => {
   res.json({
     status: 'online',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     engine: 'Rovefix v1.0.1'
+  })
+})
+
+// Update notice system
+app.get('/app-version', (req, res) => {
+  res.json({
+    latest_version_code: 2, // Increment this when you release a new APK
+    latest_version_name: "1.0.1",
+    update_required: false, // Set to true to force users to update
+    download_url: "https://rovefix-backend.onrender.com/download-app",
+    release_notes: "Improved reliability and fixed upload issues."
   })
 })
 
