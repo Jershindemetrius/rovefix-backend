@@ -5,8 +5,10 @@ require('dotenv').config()
 
 const app = express()
 app.use(cors())
-app.use(express.json({ limit: '25mb' })) // Allow up to 25MB for Base64 images
-app.use(express.urlencoded({ limit: '25mb', extended: true }))
+
+// Scalability: Allow large Base64 payloads and extended parameters
+app.use(express.json({ limit: '25mb' }))
+app.use(express.urlencoded({ limit: '25mb', extended: true, parameterLimit: 50000 }))
 
 // --- MONITORING & UPDATES ---
 app.get('/health', (req, res) => {
@@ -32,13 +34,14 @@ app.get('/app-version', (req, res) => {
 // Connect to database
 require('./database')
 
-// Load model associations (relationships between tables)
+// Load model associations
 const models = require('./models/associations')
 
 // Database Sync
 const sequelize = require('./database')
 sequelize.sync({ alter: true }).then(() => {
   console.log('✅ Database synchronized (alter: true)')
+  console.log('🚀 Base64 Engine Active: Columns updated to TEXT')
 }).catch(err => {
   console.error('❌ Database sync failed:', err)
 })
@@ -53,7 +56,7 @@ const bidRoutes = require('./routes/bids')
 const supportRoutes = require('./routes/support')
 const uploadRoutes = require('./routes/upload')
 
-// Register API routes BEFORE static files (Best Practice)
+// Register API routes BEFORE static files
 app.use('/auth', authRoutes)
 app.use('/jobs', jobRoutes)
 app.use('/users', userRoutes)
@@ -67,16 +70,16 @@ app.use('/upload', uploadRoutes)
 app.use(express.static(path.join(__dirname, 'public')))
 
 // ⚡ PROFESSIONAL APK DISTRIBUTION ENGINE
-
-// --- GLOBAL ERROR HANDLER (Reliability) ---
-app.use((err, req, res, next) => {
-  console.error('[Global Error]', err.stack)
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Internal Server Error',
-    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
-  })
-})
+app.get('/download-app', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'downloads', 'Rovefix.apk');
+  res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+  res.download(filePath, 'Rovefix_Official.apk', (err) => {
+    if (err) {
+      console.error('Local File Error:', err.message);
+      res.redirect('https://github.com/Jershindemetrius/rovefix-backend/releases/download/v1.0.0/Rovefix.apk');
+    }
+  });
+});
 
 // Debug Firebase
 app.get('/debug-firebase', (req, res) => {
@@ -95,12 +98,25 @@ app.get('/debug-firebase', (req, res) => {
   }
 })
 
+// --- GLOBAL ERROR HANDLER ---
+app.use((err, req, res, next) => {
+  console.error('[Global Error]', err.stack)
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal Server Error'
+  })
+})
+
 // Serve admin panel
 app.get('/admin-panel', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin', 'index.html'))
 })
 
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`)
 })
+
+// Reliability: Increase server timeouts for large image transfers
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 125000;
