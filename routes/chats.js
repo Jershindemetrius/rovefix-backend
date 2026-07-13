@@ -7,7 +7,6 @@ const Job = require('../models/Job')
 const { sendNotification } = require('../utils/notifications')
 
 // GET /chats/:job_id
-// Get all messages for a specific job
 router.get('/:job_id', auth, async (req, res) => {
   try {
     const messages = await Message.findAll({
@@ -15,11 +14,10 @@ router.get('/:job_id', auth, async (req, res) => {
       include: [{
         model: User,
         as: 'sender',
-        attributes: ['id', 'name']
+        attributes: ['id', 'name', 'photo_url']
       }],
       order: [['createdAt', 'ASC']]
     })
-
     res.json({ success: true, messages })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
@@ -27,32 +25,34 @@ router.get('/:job_id', auth, async (req, res) => {
 })
 
 // POST /chats/:job_id
-// Send a new message
 router.post('/:job_id', auth, async (req, res) => {
   try {
-    const { text } = req.body
+    const { text, is_file, file_url, filename, filesize } = req.body
     const job_id = req.params.job_id
     const sender_id = req.user.id
 
     const message = await Message.create({
       job_id,
       sender_id,
-      text
+      text: text || (is_file ? "Sent a file" : ""),
+      is_file: is_file || false,
+      file_url,
+      filename,
+      filesize
     })
 
-    // Notify the other person
+    // Notification Logic
     const job = await Job.findByPk(job_id)
-    const recipientId = (sender_id === job.homeowner_id)
-        ? job.technician_id
-        : job.homeowner_id
+    const recipientId = (sender_id === job.homeowner_id) ? job.technician_id : job.homeowner_id
 
     if (recipientId) {
       const recipient = await User.findByPk(recipientId)
       if (recipient && recipient.fcm_token) {
+        const notifyText = is_file ? `📷 Sent a file: ${filename}` : text
         await sendNotification(
           recipient.fcm_token,
           'New Message 💬',
-          text.substring(0, 50),
+          notifyText.substring(0, 50),
           { type: 'new_message', job_id }
         )
       }
