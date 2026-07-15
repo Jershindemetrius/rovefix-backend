@@ -11,14 +11,12 @@ router.get('/ping', (req, res) => {
   res.json({ success: true, message: 'Auth engine is running' })
 })
 
-// --- PIN-BASED AUTH ---
+// --- SECURE PIN-BASED AUTH ---
 
 // POST /auth/register
-// Handles new users OR old users setting a PIN for the first time
 router.post('/register', async (req, res) => {
   try {
     const { phone, pin, name, user_type, referral_code_used } = req.body
-    console.log('[Auth] Registration/Migration attempt:', phone)
 
     if (!phone || !pin || pin.length !== 6) {
       return res.status(400).json({ success: false, message: 'Invalid phone or 6-digit PIN' })
@@ -26,25 +24,17 @@ router.post('/register', async (req, res) => {
 
     const hashedPin = await bcrypt.hash(pin, 10)
 
-    // Check if user exists
     let user = await User.findOne({ where: { phone } })
 
     if (user) {
-      // If user exists and already has a PIN, then they should use Login
       if (user.pin) {
-        return res.status(400).json({ success: false, message: 'Phone number already registered. Please login.' })
+        return res.status(400).json({ success: false, message: 'Already registered. Please login.' })
       }
-
-      // If user exists but has NO PIN (Migration case), update them
-      console.log('[Auth] Migrating existing user to PIN system:', phone)
       user.pin = hashedPin
       if (name) user.name = name
       if (user_type) user.user_type = user_type
       await user.save()
     } else {
-      // Completely new user
-      console.log('[Auth] Creating brand new user:', phone)
-
       let referredByUserId = null
       if (referral_code_used) {
         const referrer = await User.findOne({ where: { referral_code: referral_code_used.toUpperCase() } })
@@ -68,12 +58,10 @@ router.post('/register', async (req, res) => {
       { expiresIn: '30d' }
     )
 
-    const isProfileComplete = user.name && user.name !== 'User' && user.city
-
     res.json({
       success: true,
       token,
-      is_profile_complete: !!isProfileComplete,
+      is_profile_complete: !!(user.name && user.name !== 'User' && user.city),
       user: {
         id: user.id,
         name: user.name,
@@ -84,8 +72,7 @@ router.post('/register', async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('[Auth] Registration error:', error)
-    res.status(500).json({ success: false, message: 'Registration/Migration failed' })
+    res.status(500).json({ success: false, message: 'Registration failed' })
   }
 })
 
@@ -93,19 +80,62 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { phone, pin } = req.body
-    console.log('[Auth] Login attempt:', phone)
 
     const user = await User.findOne({ where: { phone } })
 
-    // If user exists but has no PIN, we return 404 so the app triggers "register" (migration)
     if (!user || !user.pin) {
-      return res.status(404).json({ success: false, message: 'User not found or PIN not set' })
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    const now = new Date()
+
+    // 🛡️ SECURITY Check 1: Check Lockout status
+    if (user.lockout_until && user.lockout_until > now) {
+      const diffMs = user.lockout_until - now
+      const hours = Math.floor(diffMs / (1000 * 60 * 60))
+      const mins = Math.ceil((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+
+      let timeStr = hours > 0 ? `${hours} hours` : `${mins} minutes`
+      return res.status(403).json({
+        success: false,
+        message: `Account locked. Try again in ${timeStr}.`
+      })
+    }
+
+    // Reset failed attempts if the previous lockout period has passed
+    if (user.lockout_until && user.lockout_until <= now) {
+      user.failed_attempts = 0
+      user.lockout_until = null
+      await user.save()
     }
 
     const isMatch = await bcrypt.compare(pin, user.pin)
+
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid 6-digit PIN' })
+      // 🛡️ SECURITY Check 2: Increment failed attempts
+      user.failed_attempts += 1
+
+      let message = 'Invalid 6-digit PIN'
+
+      if (user.failed_attempts >= 5) {
+        // Lock account for exactly 24 hours
+        user.lockout_until = new Date(Date.now() + 24 * 60 * 60 * 1000)
+        message = 'Too many failed attempts. Account locked for 24 hours.'
+      } else {
+        const remaining = 5 - user.failed_attempts
+        message = `Invalid PIN. ${remaining} attempts remaining before 24-hour lockout.`
+      }
+
+      await user.save()
+      await new Promise(resolve => setTimeout(resolve, 1500)) // Anti-brute force delay
+
+      return res.status(401).json({ success: false, message })
     }
+
+    // Success! Reset security counters
+    user.failed_attempts = 0
+    user.lockout_until = null
+    await user.save()
 
     const token = jwt.sign(
       { id: user.id, user_type: user.user_type },
@@ -113,12 +143,10 @@ router.post('/login', async (req, res) => {
       { expiresIn: '30d' }
     )
 
-    const isProfileComplete = user.name && user.name !== 'User' && user.city
-
     res.json({
       success: true,
       token,
-      is_profile_complete: !!isProfileComplete,
+      is_profile_complete: !!(user.name && user.name !== 'User' && user.city),
       user: {
         id: user.id,
         name: user.name,
@@ -129,7 +157,7 @@ router.post('/login', async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('[Auth] Login error:', error)
+    console.error('Login error:', error)
     res.status(500).json({ success: false, message: 'Login failed' })
   }
 })

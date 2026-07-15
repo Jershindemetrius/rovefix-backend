@@ -73,6 +73,15 @@ const User = sequelize.define('User', {
   referred_by: {
     type: DataTypes.UUID,
     allowNull: true
+  },
+  // 🛡️ SECURITY: Brute-force protection
+  failed_attempts: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  lockout_until: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 })
 
