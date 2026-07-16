@@ -6,16 +6,54 @@ require('dotenv').config()
 const app = express()
 app.use(cors())
 
-// 🛡️ SECURITY & RELIABILITY LAYER
+// ==========================================================
+// 1. PUBLIC ROUTES & LANDING PAGE (Always Accessible)
+// ==========================================================
+
+// Serve static files (images, css, etc.) from the 'public' folder
+app.use(express.static(path.join(__dirname, 'public')))
+
+// Landing Page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'))
+})
+
+// APK Download Route
+app.get('/download-app', (req, res) => {
+  // Directly redirect to your official GitHub release for the fastest download
+  res.redirect('https://github.com/Jershindemetrius/rovefix-backend/releases/download/v1.0.0/Rovefix.apk');
+});
+
+// Health Check (For Monitoring)
+app.get('/health', (req, res) => res.json({ status: 'online', version: '1.0.1' }))
+
+// ==========================================================
+// 2. MASTER UPDATE CONTROL (Change these to trigger updates)
+// ==========================================================
+app.get('/app-version', (req, res) => {
+  res.json({
+    latest_version_code: 1,      // Increment this (1, 2, 3...) when you release a new APK
+    latest_version_name: "1.0.0",
+    update_required: false,      // Set to TRUE to force all users to update before using the app
+    download_url: "https://github.com/Jershindemetrius/rovefix-backend/releases/download/v1.0.0/Rovefix.apk",
+    release_notes: "Stability and reliability update. Fixed image uploads and improved performance."
+  })
+})
+
+// ==========================================================
+// 3. SECURITY & PROTECTION LAYER
+// ==========================================================
+
+// Rate Limiting (Prevents Spam/DDoS)
 const requestCounts = new Map();
 app.use((req, res, next) => {
-  const ip = req.ip;
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const now = Date.now();
   if (!requestCounts.has(ip)) {
     requestCounts.set(ip, { count: 1, startTime: now });
   } else {
     const data = requestCounts.get(ip);
-    if (now - data.startTime > 60000) {
+    if (now - data.startTime > 60000) { // 1 minute window
       data.count = 1;
       data.startTime = now;
     } else {
@@ -26,39 +64,40 @@ app.use((req, res, next) => {
   next();
 });
 
+// App Handshake (Only allow our official app to talk to the API)
 const API_SECRET_KEY = process.env.API_SECRET_KEY || 'rf_sec_2026_x99_zanvis';
+const apiRoutes = ['/auth', '/jobs', '/users', '/admin', '/chats', '/bids', '/support', '/upload'];
+
 app.use((req, res, next) => {
-  if (req.path === '/health' || req.path === '/app-version' || req.path.startsWith('/public')) return next();
-  const appKey = req.headers['x-rovefix-app-key'];
-  if (appKey !== API_SECRET_KEY) return res.status(403).json({ success: false, message: 'Unauthorized Client' });
+  const isApiRoute = apiRoutes.some(route => req.path.startsWith(route));
+
+  if (isApiRoute) {
+    const appKey = req.headers['x-rovefix-app-key'];
+    if (appKey !== API_SECRET_KEY) {
+      console.warn(`[Security] Blocked unauthorized request from ${req.ip} to ${req.path}`);
+      return res.status(403).json({ success: false, message: 'Unauthorized Client' });
+    }
+  }
   next();
 });
 
-app.use(express.json({ limit: '30mb' })) // Increased for multiple Base64 photos
+// ==========================================================
+// 4. API CONFIGURATION & ROUTES
+// ==========================================================
+
+app.use(express.json({ limit: '30mb' })) // Support large Base64 uploads
 app.use(express.urlencoded({ limit: '30mb', extended: true, parameterLimit: 50000 }))
 
-// --- MONITORING & UPDATES ---
-app.get('/health', (req, res) => res.json({ status: 'online', version: '1.0.1' }))
-
-app.get('/app-version', (req, res) => {
-  res.json({
-    latest_version_code: 1,
-    latest_version_name: "1.0.0",
-    update_required: false, // Set true to block app access
-    download_url: "https://github.com/Jershindemetrius/rovefix-backend/releases/download/v1.0.0/Rovefix.apk",
-    release_notes: "Stability and reliability update."
-  })
-})
-
+// Database Connection & Synchronization
 require('./database')
-const models = require('./models/associations')
+require('./models/associations')
 const sequelize = require('./database')
 
 sequelize.sync({ alter: true }).then(() => {
-  console.log('✅ Database synchronized')
-}).catch(err => console.error('❌ Database sync failed:', err))
+  console.log('✅ Database Synchronized')
+}).catch(err => console.error('❌ Database Sync Failed:', err))
 
-// Routes
+// Register API Route Files
 const authRoutes = require('./routes/auth')
 const jobRoutes = require('./routes/jobs')
 const userRoutes = require('./routes/users')
@@ -77,20 +116,25 @@ app.use('/bids', bidRoutes)
 app.use('/support', supportRoutes)
 app.use('/upload', uploadRoutes)
 
-app.use(express.static(path.join(__dirname, 'public')))
+// Admin panel (Browser access)
+app.get('/admin-panel', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin', 'index.html'))
+})
 
-// APK Download
-app.get('/download-app', (req, res) => {
-  res.redirect('https://github.com/Jershindemetrius/rovefix-backend/releases/download/v1.0.0/Rovefix.apk');
-});
+// ==========================================================
+// 5. ERROR HANDLING & SERVER START
+// ==========================================================
 
-// Global Error Handler
 app.use((err, req, res, next) => {
-  console.error('[Global Error]', err.stack)
+  console.error('[System Error]', err.stack)
   res.status(500).json({ success: false, message: 'Internal Server Error' })
 })
 
 const PORT = process.env.PORT || 3000
-const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Rovefix Engine Running on Port ${PORT}`)
+})
+
+// High-Performance connection settings
 server.keepAliveTimeout = 120000;
 server.headersTimeout = 125000;
