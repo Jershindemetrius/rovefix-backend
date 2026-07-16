@@ -8,11 +8,12 @@ const Job = require('../models/Job')
 const User = require('../models/User')
 const TechnicianProfile = require('../models/TechnicianProfile')
 const { sendNotification } = require('../utils/notifications')
+const { postJobRules, validate } = require('../middleware/validator')
 
 
 // POST /jobs
 // Homeowner posts a new repair job
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, postJobRules, validate, async (req, res) => {
   try {
     // auth middleware already verified the token
     // req.user.id is the homeowner's ID from the token
@@ -57,9 +58,14 @@ router.post('/', auth, async (req, res) => {
 // Technician sees all open jobs
 router.get('/open', auth, async (req, res) => {
   try {
+    const limit = parseInt(req.query.limit) || 20
+    const offset = parseInt(req.query.offset) || 0
+
     const jobs = await Job.findAll({
       where: { status: 'open' },         // only show open jobs
       order: [['createdAt', 'DESC']],    // newest first
+      limit,
+      offset,
       include: [{
         model: User,
         as: 'homeowner',
@@ -79,17 +85,23 @@ router.get('/open', auth, async (req, res) => {
 // User sees their own jobs (homeowner sees jobs they posted, technician sees jobs they accepted)
 router.get('/my', auth, async (req, res) => {
   try {
+    const limit = parseInt(req.query.limit) || 20
+    const offset = parseInt(req.query.offset) || 0
     let jobs
 
     if (req.user.user_type === 'homeowner') {
       jobs = await Job.findAll({
         where: { homeowner_id: req.user.id },
-        order: [['createdAt', 'DESC']]
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset
       })
     } else {
       jobs = await Job.findAll({
         where: { technician_id: req.user.id },
-        order: [['createdAt', 'DESC']]
+        order: [['createdAt', 'DESC']],
+        limit,
+        offset
       })
     }
 
@@ -204,6 +216,43 @@ router.put('/:id/complete', auth, async (req, res) => {
   } catch (error) {
     console.log('Complete job error:', error)
     res.status(500).json({ success: false, message: 'Failed to complete job' })
+  }
+})
+
+// PUT /jobs/:id/finish
+// Technician marks the job as finished (awaiting homeowner confirmation)
+router.put('/:id/finish', auth, async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id)
+
+    if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
+
+    // Only the assigned technician can mark it as finished
+    if (job.technician_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Not authorized' })
+    }
+
+    if (job.status !== 'in_progress') {
+      return res.status(400).json({ success: false, message: 'Job must be in progress to finish' })
+    }
+
+    await job.update({ status: 'finished' })
+
+    // Notify homeowner
+    const homeowner = await User.findByPk(job.homeowner_id)
+    if (homeowner?.fcm_token) {
+      await sendNotification(
+        homeowner.fcm_token,
+        'Work Finished! 🏠',
+        'Technician has marked the work as finished. Please confirm.',
+        { type: 'job_finished', job_id: job.id.toString() }
+      )
+    }
+
+    res.json({ success: true, message: 'Job marked as finished', job })
+  } catch (error) {
+    console.log('Finish job error:', error)
+    res.status(500).json({ success: false, message: 'Failed to finish job' })
   }
 })
 

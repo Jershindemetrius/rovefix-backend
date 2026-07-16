@@ -94,6 +94,9 @@
             <button onclick="switchTab('jobs')" id="nav-jobs" class="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-admin-muted hover:text-white transition-all">
                 <i class="fa-solid fa-ledger w-5"></i> System Ledger
             </button>
+            <button onclick="switchTab('reports')" id="nav-reports" class="w-full flex items-center gap-4 px-6 py-4 rounded-xl text-admin-muted hover:text-white transition-all">
+                <i class="fa-solid fa-flag w-5"></i> Reports
+            </button>
         </nav>
 
         <div class="p-8 border-t border-white/5">
@@ -330,17 +333,20 @@
             head.innerHTML = '<th class="p-6">User Details</th><th class="p-6">Type</th><th class="p-6">Status</th><th class="p-6 text-right">Registered</th>';
         } else if (type === 'pending') {
             endpoint = '/technicians/pending';
-            head.innerHTML = '<th class="p-6">Candidate</th><th class="p-6">Category</th><th class="p-6">ID Document</th><th class="p-6 text-right">Actions</th>';
+            head.innerHTML = '<th class="p-6">Candidate</th><th class="p-6">Category</th><th class="p-6">ID Document</th><th class="p-6">License Doc</th><th class="p-6 text-right">Actions</th>';
         } else if (type === 'jobs') {
             endpoint = '/jobs';
             head.innerHTML = '<th class="p-6">Job Description</th><th class="p-6">Location</th><th class="p-6">Price</th><th class="p-6">Status</th><th class="p-6 text-right">Posted</th>';
+        } else if (type === 'reports') {
+            endpoint = '/reports';
+            head.innerHTML = '<th class="p-6">Reporter</th><th class="p-6">Reported User</th><th class="p-6">Reason</th><th class="p-6">Status</th><th class="p-6 text-right">Actions</th>';
         }
 
         fetch(`${API_URL}${endpoint}`, { headers: { 'Authorization': currentAuthKey } })
             .then(res => res.json())
             .then(data => {
                 loader.classList.add('hidden');
-                tableData = (data.users || data.technicians || data.jobs || []);
+                tableData = (data.users || data.technicians || data.jobs || data.reports || []);
 
                 if (tableData.length === 0) {
                     empty.classList.remove('hidden');
@@ -382,8 +388,15 @@
                                 <td class="p-6 font-medium uppercase text-admin-accent text-[11px] tracking-widest">${item.category}</td>
                                 <td class="p-6">
                                     <a href="${item.id_doc_url}" target="_blank" class="text-xs text-admin-accent hover:underline flex items-center gap-2">
-                                        <i class="fa-solid fa-image"></i> View Document
+                                        <i class="fa-solid fa-id-card"></i> Aadhaar
                                     </a>
+                                </td>
+                                <td class="p-6">
+                                    ${item.license_doc_url ? `
+                                        <a href="${item.license_doc_url}" target="_blank" class="text-xs text-admin-success hover:underline flex items-center gap-2">
+                                            <i class="fa-solid fa-certificate"></i> License
+                                        </a>
+                                    ` : '<span class="text-xs text-admin-error italic">Not Uploaded</span>'}
                                 </td>
                                 <td class="p-6 text-right space-x-2">
                                     <button onclick="actionTech('${item.id}', 'approve')" class="px-4 py-2 bg-admin-success text-black text-[10px] font-bold rounded-lg uppercase">Approve</button>
@@ -404,6 +417,32 @@
                                     <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter bg-white/10 text-white">${item.status}</span>
                                 </td>
                                 <td class="p-6 text-right text-xs opacity-60">${new Date(item.createdAt).toLocaleDateString()}</td>
+                            </tr>
+                        `;
+                    } else if (type === 'reports') {
+                        return `
+                            <tr class="hover:bg-white/[0.02]">
+                                <td class="p-6">
+                                    <p class="font-bold text-white">${item.reporter?.name}</p>
+                                    <p class="text-[11px] opacity-60 mt-1">${item.reporter?.phone}</p>
+                                </td>
+                                <td class="p-6">
+                                    <p class="font-bold text-white">${item.reported?.name}</p>
+                                    <p class="text-[11px] opacity-60 mt-1">${item.reported?.user_type.toUpperCase()}</p>
+                                </td>
+                                <td class="p-6">
+                                    <p class="text-xs text-white">${item.reason}</p>
+                                    <p class="text-[10px] opacity-60 mt-1 italic">${item.description || 'No details'}</p>
+                                </td>
+                                <td class="p-6">
+                                    <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter ${item.status === 'pending' ? 'bg-admin-error/20 text-admin-error' : 'bg-admin-success/20 text-admin-success'}">${item.status}</span>
+                                </td>
+                                <td class="p-6 text-right space-x-2">
+                                    ${item.status === 'pending' ? `
+                                        <button onclick="actionReport('${item.id}', 'resolve')" class="px-4 py-2 bg-admin-success text-black text-[10px] font-bold rounded-lg uppercase">Resolve</button>
+                                        <button onclick="actionReport('${item.id}', 'ignore')" class="px-4 py-2 border border-white/10 text-admin-muted text-[10px] font-bold rounded-lg uppercase hover:bg-white/10">Ignore</button>
+                                    ` : '<span class="text-[10px] font-bold opacity-30">ACTIONED</span>'}
+                                </td>
                             </tr>
                         `;
                     }
@@ -461,6 +500,19 @@
                 alert("Operation successful.");
                 loadTableData('pending');
                 refreshDashboard();
+            }
+        });
+    }
+
+    function actionReport(id, status) {
+        fetch(`${API_URL}/reports/${id}/resolve`, {
+            method: 'PUT',
+            headers: { 'Authorization': currentAuthKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                alert(`Report ${status}`);
+                loadTableData('reports');
             }
         });
     }

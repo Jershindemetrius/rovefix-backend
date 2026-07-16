@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const adminAuth = require('../middleware/adminAuth')
-const { User, Job, TechnicianProfile, Review } = require('../models/associations')
+const { User, Job, TechnicianProfile, Review, Report } = require('../models/associations')
 const { Op } = require('sequelize')
 
 // 📊 ADVANCED ADMIN DASHBOARD
@@ -64,7 +64,7 @@ router.get('/technicians/pending', adminAuth, async (req, res) => {
   try {
     const pending = await TechnicianProfile.findAll({
       where: { approved: false },
-      attributes: ['id', 'user_id', 'category', 'id_doc_url', 'createdAt'],
+      attributes: ['id', 'user_id', 'category', 'id_doc_url', 'license_doc_url', 'createdAt'],
       include: [{ model: User, as: 'user', attributes: ['name', 'phone', 'city'] }]
     })
     res.json({ success: true, technicians: pending })
@@ -78,7 +78,7 @@ router.put('/technicians/:id/approve', adminAuth, async (req, res) => {
   try {
     const profile = await TechnicianProfile.findByPk(req.params.id)
     if (!profile) return res.status(404).json({ success: false, message: 'Not found' })
-    await profile.update({ approved: true, id_doc_url: null }) // Purge doc after approval
+    await profile.update({ approved: true, id_doc_url: null, license_doc_url: null }) // Purge docs after approval
     await User.update({ is_verified: true }, { where: { id: profile.user_id } })
     res.json({ success: true, message: 'Technician Verified' })
   } catch (error) {
@@ -93,6 +93,36 @@ router.put('/technicians/:id/reject', adminAuth, async (req, res) => {
     if (!profile) return res.status(404).json({ success: false, message: 'Not found' })
     await profile.destroy()
     res.json({ success: true, message: 'Technician Rejected & Data Purged' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// 🚩 VIEW REPORTS
+router.get('/reports', adminAuth, async (req, res) => {
+  try {
+    const reports = await Report.findAll({
+      include: [
+        { model: User, as: 'reporter', attributes: ['name', 'phone'] },
+        { model: User, as: 'reported', attributes: ['name', 'phone', 'user_type'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    })
+    res.json({ success: true, reports })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// 🛠️ RESOLVE REPORT
+router.put('/reports/:id/resolve', adminAuth, async (req, res) => {
+  try {
+    const { status } = req.body // 'resolved' or 'ignored'
+    const report = await Report.findByPk(req.params.id)
+    if (!report) return res.status(404).json({ success: false, message: 'Report not found' })
+
+    await report.update({ status })
+    res.json({ success: true, message: `Report marked as ${status}` })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }

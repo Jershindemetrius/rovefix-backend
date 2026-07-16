@@ -53,7 +53,7 @@ const Job = sequelize.define('Job', {
   },
 
   status: {
-    type: DataTypes.ENUM('open', 'matched', 'in_progress', 'done', 'disputed'),
+    type: DataTypes.ENUM('open', 'matched', 'in_progress', 'finished', 'done', 'disputed'),
     defaultValue: 'open'   // all jobs start as open
   },
 
@@ -77,6 +77,13 @@ const Job = sequelize.define('Job', {
     allowNull: true
   }
 
+}, {
+  indexes: [
+    { fields: ['homeowner_id'] },
+    { fields: ['technician_id'] },
+    { fields: ['status'] },
+    { fields: ['category'] }
+  ]
 })
 
 module.exports = Job

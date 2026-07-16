@@ -8,6 +8,7 @@ const Review = require('./Review')
 const Message = require('./Message')
 const Bid = require('./Bid')
 const SupportTicket = require('./SupportTicket')
+const Report = require('./Report')
 
 // A job belongs to a homeowner (who is a User)
 Job.belongsTo(User, { foreignKey: 'homeowner_id', as: 'homeowner' })
@@ -43,4 +44,10 @@ User.hasMany(Bid, { foreignKey: 'technician_id', as: 'my_bids' })
 User.hasMany(SupportTicket, { foreignKey: 'user_id', as: 'support_tickets' })
 SupportTicket.belongsTo(User, { foreignKey: 'user_id' })
 
-module.exports = { User, Job, TechnicianProfile, Review, Message, Bid, SupportTicket }
+// Reporting System
+User.hasMany(Report, { foreignKey: 'reporter_id', as: 'submitted_reports' })
+User.hasMany(Report, { foreignKey: 'reported_id', as: 'received_reports' })
+Report.belongsTo(User, { foreignKey: 'reporter_id', as: 'reporter' })
+Report.belongsTo(User, { foreignKey: 'reported_id', as: 'reported' })
+
+module.exports = { User, Job, TechnicianProfile, Review, Message, Bid, SupportTicket, Report }

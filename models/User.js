@@ -83,6 +83,10 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: true
   }
+}, {
+  indexes: [
+    { fields: ['user_type'] }
+  ]
 })
 
 module.exports = User

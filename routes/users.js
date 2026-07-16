@@ -5,11 +5,13 @@ const User = require('../models/User')
 const TechnicianProfile = require('../models/TechnicianProfile')
 const Job = require('../models/Job')
 const Review = require('../models/Review')
+const Report = require('../models/Report')
+const { profileUpdateRules, validate } = require('../middleware/validator')
 
 // PUT /users/profile
-router.put('/profile', auth, async (req, res) => {
+router.put('/profile', auth, profileUpdateRules, validate, async (req, res) => {
   try {
-    const { name, city, category, address, photo_url, id_doc_url } = req.body
+    const { name, city, category, address, photo_url, id_doc_url, license_doc_url, bio, years_experience, is_online } = req.body
 
     // Update User table fields
     const userUpdateData = {}
@@ -27,6 +29,10 @@ router.put('/profile', auth, async (req, res) => {
       const techUpdateData = {}
       if (category) techUpdateData.category = category
       if (id_doc_url) techUpdateData.id_doc_url = id_doc_url
+      if (license_doc_url) techUpdateData.license_doc_url = license_doc_url
+      if (bio !== undefined) techUpdateData.bio = bio
+      if (years_experience !== undefined) techUpdateData.years_experience = years_experience
+      if (is_online !== undefined) techUpdateData.is_online = is_online
 
       if (Object.keys(techUpdateData).length > 0) {
         const [profile, created] = await TechnicianProfile.findOrCreate({
@@ -151,6 +157,30 @@ router.put('/portfolio', auth, async (req, res) => {
 
     await profile.update({ portfolio_urls })
     res.json({ success: true, message: 'Portfolio updated' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// POST /users/report
+// Submit a report against a user
+router.post('/report', auth, async (req, res) => {
+  try {
+    const { reported_id, job_id, reason, description } = req.body
+
+    if (!reported_id || !reason) {
+      return res.status(400).json({ success: false, message: 'Missing reported ID or reason' })
+    }
+
+    const report = await Report.create({
+      reporter_id: req.user.id,
+      reported_id,
+      job_id,
+      reason,
+      description
+    })
+
+    res.json({ success: true, report })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }

@@ -41,6 +41,11 @@ const Review = sequelize.define('Review', {
     allowNull: true     // Changed to TEXT for Base64 support
   }
 
+}, {
+  indexes: [
+    { fields: ['job_id'] },
+    { fields: ['technician_id'] }
+  ]
 })
 
 module.exports = Review

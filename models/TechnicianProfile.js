@@ -27,6 +27,11 @@ const TechnicianProfile = sequelize.define('TechnicianProfile', {
     allowNull: true     // Changed to TEXT for Base64 support
   },
 
+  license_doc_url: {
+    type: DataTypes.TEXT,
+    allowNull: true     // Professional license (electrician license, etc.)
+  },
+
   approved: {
     type: DataTypes.BOOLEAN,
     defaultValue: false  // admin must approve before they appear in job feed
@@ -45,8 +50,27 @@ const TechnicianProfile = sequelize.define('TechnicianProfile', {
   portfolio_urls: {
     type: DataTypes.JSON,
     defaultValue: []
+  },
+
+  years_experience: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+
+  bio: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+
+  is_online: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
 
+}, {
+  indexes: [
+    { fields: ['user_id'] }
+  ]
 })
 
 module.exports = TechnicianProfile

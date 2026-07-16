@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt')
 const firebaseAdmin = require('../firebase-admin')
 const User = require('../models/User')
 const { generateReferralCode } = require('../utils/referral')
+const { registerRules, validate } = require('../middleware/validator')
 
 // --- DEBUG ROUTE ---
 router.get('/ping', (req, res) => {
@@ -14,12 +15,12 @@ router.get('/ping', (req, res) => {
 // --- SECURE PIN-BASED AUTH ---
 
 // POST /auth/register
-router.post('/register', async (req, res) => {
+router.post('/register', registerRules, validate, async (req, res) => {
   try {
     const { phone, pin, name, user_type, referral_code_used } = req.body
 
-    if (!phone || !pin || pin.length !== 6) {
-      return res.status(400).json({ success: false, message: 'Invalid phone or 6-digit PIN' })
+    if (!pin || pin.length !== 6) {
+      return res.status(400).json({ success: false, message: 'Invalid 6-digit PIN' })
     }
 
     const hashedPin = await bcrypt.hash(pin, 10)
