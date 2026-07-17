@@ -6,10 +6,11 @@ const Job = require('../models/Job')
 const User = require('../models/User')
 const TechnicianProfile = require('../models/TechnicianProfile')
 const { sendNotification } = require('../utils/notifications')
+const { placeBidRules, validate } = require('../middleware/validator')
 
 // POST /bids/:job_id
 // Technician places a bid on an open job
-router.post('/:job_id', auth, async (req, res) => {
+router.post('/:job_id', auth, placeBidRules, validate, async (req, res) => {
   try {
     if (req.user.user_type !== 'technician') {
       return res.status(403).json({ success: false, message: 'Only technicians can bid' })
@@ -49,7 +50,7 @@ router.post('/:job_id', auth, async (req, res) => {
         homeowner.fcm_token,
         'New Bid Received! 💰',
         `A technician offered ₹${price} for your repair`,
-        { type: 'new_bid', job_id }
+        { type: 'new_bid', job_id: job_id.toString() }
       )
     }
 

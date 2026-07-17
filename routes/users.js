@@ -186,4 +186,22 @@ router.post('/report', auth, async (req, res) => {
   }
 })
 
+// DELETE /users/profile
+// Allow user to delete their own account
+router.delete('/profile', auth, async (req, res) => {
+  try {
+    const userId = req.user.id
+
+    // Cleanup: Delete technician profile if it exists
+    await TechnicianProfile.destroy({ where: { user_id: userId } })
+
+    // Delete the user record
+    await User.destroy({ where: { id: userId } })
+
+    res.json({ success: true, message: 'Account deleted successfully' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete account' })
+  }
+})
+
 module.exports = router

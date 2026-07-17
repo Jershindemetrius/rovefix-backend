@@ -22,8 +22,8 @@ const validate = (req, res, next) => {
 
 // Validation rules for Registration
 const registerRules = [
-  body('phone').isLength({ min: 10, max: 10 }).withMessage('Phone number must be exactly 10 digits'),
-  body('password').isLength({ min: 4 }).withMessage('Password must be at least 4 characters long'),
+  body('phone').isLength({ min: 10, max: 15 }).withMessage('Invalid phone number format'),
+  body('pin').isLength({ min: 6, max: 6 }).withMessage('PIN must be exactly 6 digits'),
   body('user_type').isIn(['homeowner', 'technician']).withMessage('Invalid user type')
 ]
 
@@ -40,9 +40,17 @@ const postJobRules = [
   body('location').notEmpty().withMessage('Location is required')
 ]
 
+// Validation rules for Bidding
+const placeBidRules = [
+  body('price').isFloat({ min: 1 }).withMessage('Price must be at least 1'),
+  body('estimated_time').notEmpty().withMessage('Estimated time is required'),
+  body('message').optional().isLength({ max: 500 }).withMessage('Message is too long')
+]
+
 module.exports = {
   validate,
   registerRules,
   profileUpdateRules,
-  postJobRules
+  postJobRules,
+  placeBidRules
 }

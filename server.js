@@ -25,7 +25,18 @@ app.get('/download-app', (req, res) => {
 });
 
 // Health Check (For Monitoring)
-app.get('/health', (req, res) => res.json({ status: 'online', version: '1.0.1' }))
+app.get('/health', (req, res) => res.json({ status: 'online', version: '1.1.0' }))
+
+const faqs = [
+  { q: "How do I become a verified technician?", a: "Go to your profile and upload your Aadhaar and Professional License. Our admin team will review it within 24 hours." },
+  { q: "Is payment secure?", a: "Currently, Rovefix facilitates the booking. Payments are made directly to the technician in cash after you are satisfied with the work." },
+  { q: "What if I have a dispute?", a: "You can 'Report an Issue' directly from the job status screen. Our support team will mediate and resolve it." },
+  { q: "How do I update my profile?", a: "Go to the Profile tab and tap 'Edit'. You can update your name, city, and bio there." },
+  { q: "Can I cancel a request?", a: "Yes, you can cancel an open request at any time before a technician accepts it." }
+]
+
+// FAQ Route
+app.get('/support/faqs', (req, res) => res.json({ success: true, faqs }))
 
 // ==========================================================
 // 2. MASTER UPDATE CONTROL (Change these to trigger updates)

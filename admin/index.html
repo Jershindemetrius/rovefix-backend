@@ -179,7 +179,7 @@
                         <div class="flex items-center gap-4">
                             <div class="relative">
                                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-admin-muted text-xs"></i>
-                                <input type="text" id="tableSearch" placeholder="Search record ID or phone..." class="pl-12 pr-6 py-3 w-80 rounded-xl text-sm border-white/5">
+                                <input type="text" id="tableSearch" placeholder="Search by name, phone or ID..." class="pl-12 pr-6 py-3 w-80 rounded-xl text-sm border-white/5" oninput="filterTable()">
                             </div>
                         </div>
                         <button onclick="reloadData()" class="p-3 hover:bg-white/5 rounded-xl text-admin-muted hover:text-white transition-all">
@@ -323,6 +323,7 @@
         const loader = document.getElementById('tableLoader');
         const empty = document.getElementById('tableEmpty');
 
+        document.getElementById('tableSearch').value = ''; // Clear search on tab switch
         body.innerHTML = '';
         loader.classList.remove('hidden');
         empty.classList.add('hidden');
@@ -515,6 +516,29 @@
                 loadTableData('reports');
             }
         });
+    }
+
+    function filterTable() {
+        const query = document.getElementById('tableSearch').value.toLowerCase();
+        const rows = document.querySelectorAll('#tableBody tr');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            if (text.includes(query)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        const empty = document.getElementById('tableEmpty');
+        if (visibleCount === 0 && tableData.length > 0) {
+            empty.classList.remove('hidden');
+        } else {
+            empty.classList.add('hidden');
+        }
     }
 
     function reloadData() {

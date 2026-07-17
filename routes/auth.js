@@ -6,6 +6,17 @@ const firebaseAdmin = require('../firebase-admin')
 const User = require('../models/User')
 const { generateReferralCode } = require('../utils/referral')
 const { registerRules, validate } = require('../middleware/validator')
+const { Op } = require('sequelize')
+
+// --- HELPERS ---
+const normalizePhone = (phone) => {
+  if (!phone) return ''
+  // Remove all non-numeric characters
+  let digits = phone.replace(/\D/g, '')
+  // If it starts with 91 followed by 10 digits, strip the prefix
+  if (digits.length === 12 && digits.startsWith('91')) return digits.substring(2)
+  return digits
+}
 
 // --- DEBUG ROUTE ---
 router.get('/ping', (req, res) => {
@@ -17,15 +28,26 @@ router.get('/ping', (req, res) => {
 // POST /auth/register
 router.post('/register', registerRules, validate, async (req, res) => {
   try {
-    const { phone, pin, name, user_type, referral_code_used } = req.body
+    let { phone, pin, name, user_type, referral_code_used } = req.body
 
-    if (!pin || pin.length !== 6) {
+    const normalized = normalizePhone(phone)
+    console.log(`[Auth] Registration attempt: ${phone}, normalized: ${normalized}`)
+
+    if (!pin || String(pin).length !== 6) {
       return res.status(400).json({ success: false, message: 'Invalid 6-digit PIN' })
     }
 
-    const hashedPin = await bcrypt.hash(pin, 10)
+    const hashedPin = await bcrypt.hash(String(pin), 10)
 
-    let user = await User.findOne({ where: { phone } })
+    // Check multiple formats to avoid duplicate accounts
+    let user = await User.findOne({
+      where: {
+        [Op.or]: [
+          { phone: normalized },
+          { phone: phone }
+        ]
+      }
+    })
 
     if (user) {
       if (user.pin) {
@@ -44,7 +66,7 @@ router.post('/register', registerRules, validate, async (req, res) => {
 
       user = await User.create({
         name: name || 'User',
-        phone,
+        phone: normalized,
         pin: hashedPin,
         user_type: user_type || 'homeowner',
         referral_code: generateReferralCode(name || 'RV'),
@@ -73,6 +95,7 @@ router.post('/register', registerRules, validate, async (req, res) => {
       }
     })
   } catch (error) {
+    console.error('Registration failed:', error)
     res.status(500).json({ success: false, message: 'Registration failed' })
   }
 })
@@ -80,9 +103,19 @@ router.post('/register', registerRules, validate, async (req, res) => {
 // POST /auth/login
 router.post('/login', async (req, res) => {
   try {
-    const { phone, pin } = req.body
+    let { phone, pin } = req.body
+    const normalized = normalizePhone(phone)
 
-    const user = await User.findOne({ where: { phone } })
+    console.log(`[Auth] Login attempt for: ${phone}, normalized: ${normalized}`)
+
+    const user = await User.findOne({
+      where: {
+        [Op.or]: [
+          { phone: normalized },
+          { phone: phone }
+        ]
+      }
+    })
 
     if (!user || !user.pin) {
       return res.status(404).json({ success: false, message: 'User not found' })
@@ -110,7 +143,10 @@ router.post('/login', async (req, res) => {
       await user.save()
     }
 
-    const isMatch = await bcrypt.compare(pin, user.pin)
+    // Diagnostic logging
+    console.log(`[Auth] Comparing PIN: incoming_len=${String(pin).length}, hash_len=${user.pin.length}`)
+
+    const isMatch = await bcrypt.compare(String(pin), user.pin)
 
     if (!isMatch) {
       // 🛡️ SECURITY Check 2: Increment failed attempts
