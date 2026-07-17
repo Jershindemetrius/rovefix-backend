@@ -43,11 +43,11 @@ app.get('/support/faqs', (req, res) => res.json({ success: true, faqs }))
 // ==========================================================
 app.get('/app-version', (req, res) => {
   res.json({
-    latest_version_code: 1,      // Increment this (1, 2, 3...) when you release a new APK
-    latest_version_name: "1.0.0",
-    update_required: false,      // Set to TRUE to force all users to update before using the app
-    download_url: "https://github.com/Jershindemetrius/rovefix-backend/releases/download/v1.0.0/Rovefix.apk",
-    release_notes: "Stability and reliability update. Fixed image uploads and improved performance."
+    latest_version_code: 2,      // Incremented to 2 to trigger update
+    latest_version_name: "1.1.0",
+    update_required: false,
+    download_url: "https://github.com/Jershindemetrius/rovefix-backend/releases/download/v1.1.0/Rovefix_Premium.apk",
+    release_notes: "🚀 PRO UPGRADE: Added full Mobile Admin Suite, high-resolution premium assets (15MB), and smooth Lottie animations."
   })
 })
 
