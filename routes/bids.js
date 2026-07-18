@@ -60,6 +60,23 @@ router.post('/:job_id', auth, placeBidRules, validate, async (req, res) => {
   }
 })
 
+// GET /bids/my
+// Technician sees their own pending bids
+router.get('/my', auth, async (req, res) => {
+  try {
+    if (req.user.user_type !== 'technician') {
+        return res.status(403).json({ success: false, message: 'Only technicians have bids' })
+    }
+    const bids = await Bid.findAll({
+      where: { technician_id: req.user.id, status: 'pending' },
+      include: [{ model: Job, attributes: ['category', 'description', 'status'] }]
+    })
+    res.json({ success: true, bids })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 // GET /bids/job/:job_id
 // Homeowner sees all bids for their job
 router.get('/job/:job_id', auth, async (req, res) => {
