@@ -34,6 +34,11 @@ router.post('/:job_id', auth, placeBidRules, validate, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Job is no longer open for bidding' })
     }
 
+    // Security: Prevent bidding on own job
+    if (job.homeowner_id === req.user.id) {
+      return res.status(403).json({ success: false, message: 'You cannot bid on your own job' })
+    }
+
     // Create the bid
     const bid = await Bid.create({
       job_id,
@@ -145,6 +150,28 @@ router.put('/:id/accept', auth, async (req, res) => {
     }
 
     res.json({ success: true, message: 'Bid accepted' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// DELETE /bids/:id
+// Technician withdraws a bid
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const bid = await Bid.findByPk(req.params.id)
+    if (!bid) return res.status(404).json({ success: false, message: 'Bid not found' })
+
+    if (bid.technician_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' })
+    }
+
+    if (bid.status !== 'pending') {
+      return res.status(400).json({ success: false, message: 'Cannot withdraw an accepted or rejected bid' })
+    }
+
+    await bid.destroy()
+    res.json({ success: true, message: 'Bid withdrawn' })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }

@@ -20,19 +20,26 @@ router.post('/', auth, postJobRules, validate, async (req, res) => {
     const { category, description, location, latitude, longitude, photo_url } = req.body
 
     const job = await Job.create({
-      homeowner_id: req.user.id,  // automatically use the logged-in user's ID
+      homeowner_id: req.user.id,
       category,
       description,
       location,
-      latitude,
-      longitude,
+      latitude: latitude ? parseFloat(latitude) : null,
+      longitude: longitude ? parseFloat(longitude) : null,
       photo_url,
       status: 'open'
     })
 
-    // Notify technicians
+    // Notify technicians matching category and online status
     const technicians = await User.findAll({
-      where: { user_type: 'technician' }
+      where: { user_type: 'technician' },
+      include: [{
+        model: TechnicianProfile,
+        where: {
+          category: category,
+          is_online: true
+        }
+      }]
     })
 
     for (const tech of technicians) {
@@ -154,7 +161,7 @@ router.put('/:id/accept', auth, async (req, res) => {
     }
 
     if (job.status !== 'open') {
-      return res.status(400).json({ success: false, message: 'Job is no longer available' })
+      return res.status(400).json({ success: false, message: 'Job is already assigned to a technician' })
     }
 
     // Get price
@@ -337,6 +344,30 @@ router.put('/:id/dispute', auth, async (req, res) => {
     })
 
     res.json({ success: true, message: 'Dispute registered' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// DELETE /jobs/:id
+// Homeowner cancels an open request
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id)
+    if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
+
+    // Security: Only the owner can delete
+    if (job.homeowner_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' })
+    }
+
+    // Logic: Only "open" jobs can be deleted/cancelled
+    if (job.status !== 'open') {
+      return res.status(400).json({ success: false, message: 'Cannot cancel an assigned or finished job' })
+    }
+
+    await job.destroy()
+    res.json({ success: true, message: 'Job cancelled and removed' })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }

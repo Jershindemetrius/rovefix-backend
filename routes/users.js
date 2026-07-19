@@ -89,9 +89,20 @@ router.post('/review', auth, async (req, res) => {
         success: false, message: 'Job not found' })
     }
 
+    // Security: Only the homeowner who posted the job can review it
+    if (job.homeowner_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized: Only the homeowner can review this job' })
+    }
+
     if (job.status !== 'done') {
       return res.status(400).json({
         success: false, message: 'Job must be completed first' })
+    }
+
+    // Integrity: Ensure no duplicate reviews for the same job
+    const existingReview = await Review.findOne({ where: { job_id } })
+    if (existingReview) {
+      return res.status(400).json({ success: false, message: 'Job already reviewed' })
     }
 
     const review = await Review.create({
@@ -148,6 +159,9 @@ router.post('/fcm-token', auth, async (req, res) => {
 // Update technician portfolio
 router.put('/portfolio', auth, async (req, res) => {
   try {
+    if (req.user.user_type !== 'technician') {
+      return res.status(403).json({ success: false, message: 'Only technicians can have a work portfolio' })
+    }
     const { portfolio_urls } = req.body
     const profile = await TechnicianProfile.findOne({ where: { user_id: req.user.id } })
 
