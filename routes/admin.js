@@ -143,4 +143,21 @@ router.get('/users', adminAuth, async (req, res) => {
   }
 })
 
+// ❌ BAN/REMOVE USER PERMANENTLY
+router.delete('/users/:id', adminAuth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id)
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' })
+
+    // Cleanup associated data
+    await TechnicianProfile.destroy({ where: { user_id: user.id } })
+    await Job.destroy({ where: { [Op.or]: [{ homeowner_id: user.id }, { technician_id: user.id }] } })
+
+    await user.destroy()
+    res.json({ success: true, message: 'User and all associated data removed' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 module.exports = router

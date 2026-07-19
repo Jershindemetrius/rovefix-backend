@@ -30,15 +30,15 @@ app.get('/health', (req, res) => res.json({ status: 'online', version: '1.1.0' }
 // FAQs now handled in /support/faqs route file
 
 // ==========================================================
-// 2. MASTER UPDATE CONTROL (Change these to trigger updates)
+// 2. MASTER UPDATE CONTROL
 // ==========================================================
 app.get('/app-version', (req, res) => {
   res.json({
-    latest_version_code: 2,      // Incremented to 2 to trigger update
-    latest_version_name: "1.1.0",
+    latest_version_code: 1,
+    latest_version_name: "1.0.0",
     update_required: false,
-    download_url: "https://github.com/Jershindemetrius/rovefix-backend/releases/download/v1.1.0/Rovefix_Premium.apk",
-    release_notes: "🚀 PRO UPGRADE: Added full Mobile Admin Suite, high-resolution premium assets (15MB), and smooth Lottie animations."
+    download_url: "https://rovefix.com/download",
+    release_notes: "Platform stability and bug fixes."
   })
 })
 

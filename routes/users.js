@@ -11,47 +11,28 @@ const { profileUpdateRules, validate } = require('../middleware/validator')
 // PUT /users/profile
 router.put('/profile', auth, profileUpdateRules, validate, async (req, res) => {
   try {
-    const { name, city, category, address, photo_url, id_doc_url, license_doc_url, bio, years_experience, is_online } = req.body
+    const fields = ['name', 'city', 'address', 'photo_url']
+    const userUpdate = {}
+    fields.forEach(f => { if (req.body[f] !== undefined) userUpdate[f] = req.body[f] })
 
-    // Update User table fields
-    const userUpdateData = {}
-    if (name) userUpdateData.name = name
-    if (city) userUpdateData.city = city
-    if (address) userUpdateData.address = address
-    if (photo_url) userUpdateData.photo_url = photo_url
-
-    if (Object.keys(userUpdateData).length > 0) {
-      await User.update(userUpdateData, { where: { id: req.user.id } })
+    if (Object.keys(userUpdate).length > 0) {
+      await User.update(userUpdate, { where: { id: req.user.id } })
     }
 
-    // Update TechnicianProfile if applicable
     if (req.user.user_type === 'technician') {
-      const techUpdateData = {}
-      if (category) techUpdateData.category = category
-      if (id_doc_url) techUpdateData.id_doc_url = id_doc_url
-      if (license_doc_url) techUpdateData.license_doc_url = license_doc_url
-      if (bio !== undefined) techUpdateData.bio = bio
-      if (years_experience !== undefined) techUpdateData.years_experience = years_experience
-      if (is_online !== undefined) techUpdateData.is_online = is_online
+      const techFields = ['category', 'id_doc_url', 'license_doc_url', 'bio', 'years_experience', 'is_online']
+      const techUpdate = {}
+      techFields.forEach(f => { if (req.body[f] !== undefined) techUpdate[f] = req.body[f] })
 
-      if (Object.keys(techUpdateData).length > 0) {
-        const [profile, created] = await TechnicianProfile.findOrCreate({
-          where: { user_id: req.user.id },
-          defaults: techUpdateData
-        })
-
-        if (!created) {
-          await profile.update(techUpdateData)
-        }
+      if (Object.keys(techUpdate).length > 0) {
+        await TechnicianProfile.upsert({ user_id: req.user.id, ...techUpdate })
       }
     }
 
     res.json({ success: true, message: 'Profile updated' })
-
   } catch (error) {
-    console.log('Update profile error:', error)
-    res.status(500).json({
-      success: false, message: 'Failed to update profile' })
+    console.error('Update profile error:', error)
+    res.status(500).json({ success: false, message: 'Failed to update profile' })
   }
 })
 
