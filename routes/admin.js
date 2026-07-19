@@ -143,6 +143,32 @@ router.get('/users', adminAuth, async (req, res) => {
   }
 })
 
+// 📁 FULL JOB HISTORY (LEDGER)
+router.get('/jobs', adminAuth, async (req, res) => {
+  try {
+    const jobs = await Job.findAll({
+      include: [
+        { model: User, as: 'homeowner', attributes: ['name', 'city'] },
+        { model: User, as: 'technician', attributes: ['name', 'city'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    })
+    res.json({ success: true, jobs })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// 🚀 DEPLOYMENT STATUS (For Verification)
+router.get('/status', adminAuth, (req, res) => {
+  res.json({
+    success: true,
+    version: "1.2.1",
+    deployedAt: "2026-07-19 23:15:00",
+    routes: ["dashboard", "snapshot", "pending", "approve", "reject", "reports", "resolve", "users", "jobs", "status"]
+  })
+})
+
 // ❌ BAN/REMOVE USER PERMANENTLY
 router.delete('/users/:id', adminAuth, async (req, res) => {
   try {
