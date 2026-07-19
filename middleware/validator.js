@@ -36,7 +36,7 @@ const profileUpdateRules = [
 // Validation rules for Job Posting
 const postJobRules = [
   body('category').notEmpty().withMessage('Category is required'),
-  body('description').isLength({ min: 10 }).withMessage('Description must be at least 10 characters long'),
+  body('description').isLength({ min: 5 }).withMessage('Description must be at least 5 characters long'),
   body('location').notEmpty().withMessage('Location is required')
 ]
 
