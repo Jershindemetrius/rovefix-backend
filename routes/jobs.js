@@ -373,28 +373,4 @@ router.delete('/:id', auth, async (req, res) => {
   }
 })
 
-// DELETE /jobs/:id
-// Homeowner cancels an open request
-router.delete('/:id', auth, async (req, res) => {
-  try {
-    const job = await Job.findByPk(req.params.id)
-    if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
-
-    // Security: Only the owner can delete
-    if (job.homeowner_id !== req.user.id) {
-      return res.status(403).json({ success: false, message: 'Unauthorized' })
-    }
-
-    // Logic: Only "open" jobs can be deleted/cancelled
-    if (job.status !== 'open') {
-      return res.status(400).json({ success: false, message: 'Cannot cancel an assigned or finished job' })
-    }
-
-    await job.destroy()
-    res.json({ success: true, message: 'Job cancelled and removed' })
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message })
-  }
-})
-
 module.exports = router
