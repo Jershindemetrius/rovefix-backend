@@ -1,8 +1,9 @@
 const express = require('express')
 const router = express.Router()
 const adminAuth = require('../middleware/adminAuth')
-const { User, Job, TechnicianProfile, Review, Report } = require('../models/associations')
+const { User, Job, TechnicianProfile, Review, Report, SupportTicket } = require('../models/associations')
 const { Op } = require('sequelize')
+const sequelize = require('../database')
 
 // 📊 ADVANCED ADMIN DASHBOARD
 router.get('/dashboard', adminAuth, async (req, res) => {
@@ -21,7 +22,14 @@ router.get('/dashboard', adminAuth, async (req, res) => {
       newUsersToday: await User.count({ where: { createdAt: { [Op.gte]: today } } }),
 
       // Calculate Total Revenue
-      totalRevenue: await Job.sum('price', { where: { status: 'done' } }) || 0
+      totalRevenue: await Job.sum('price', { where: { status: 'done' } }) || 0,
+
+      // Top Category Stats (For Analytics)
+      categoryStats: await Job.findAll({
+        attributes: ['category', [sequelize.fn('COUNT', sequelize.col('id')), 'count']],
+        group: ['category'],
+        raw: true
+      })
     }
 
     res.json({ success: true, stats })
@@ -86,13 +94,44 @@ router.put('/technicians/:id/approve', adminAuth, async (req, res) => {
   }
 })
 
-// ❌ SECURE REJECTION
+// ❌ SECURE REJECTION (Resets user so they can re-apply)
 router.put('/technicians/:id/reject', adminAuth, async (req, res) => {
   try {
     const profile = await TechnicianProfile.findByPk(req.params.id)
     if (!profile) return res.status(404).json({ success: false, message: 'Not found' })
+
+    const userId = profile.user_id
     await profile.destroy()
-    res.json({ success: true, message: 'Technician Rejected & Data Purged' })
+
+    // Reset user completion status so they can fix their profile and re-upload docs
+    await User.update({ is_profile_complete: false }, { where: { id: userId } })
+
+    res.json({ success: true, message: 'Technician Rejected. Status reset for re-application.' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// 🎫 SUPPORT TICKET MANAGEMENT
+router.get('/support', adminAuth, async (req, res) => {
+  try {
+    const tickets = await SupportTicket.findAll({
+      include: [{ model: User, attributes: ['name', 'phone'] }],
+      order: [['createdAt', 'DESC']]
+    })
+    res.json({ success: true, tickets })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+router.put('/support/:id/resolve', adminAuth, async (req, res) => {
+  try {
+    const ticket = await SupportTicket.findByPk(req.params.id)
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' })
+
+    await ticket.update({ status: 'resolved' })
+    res.json({ success: true, message: 'Ticket marked as resolved' })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }
