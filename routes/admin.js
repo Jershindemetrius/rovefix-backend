@@ -202,8 +202,8 @@ router.get('/jobs', adminAuth, async (req, res) => {
 router.get('/status', adminAuth, (req, res) => {
   res.json({
     success: true,
-    version: "1.2.1",
-    deployedAt: "2026-07-19 23:15:00",
+    version: "1.2.2",
+    deployedAt: "2026-07-20 19:15:00",
     routes: ["dashboard", "snapshot", "pending", "approve", "reject", "reports", "resolve", "users", "jobs", "status"]
   })
 })
