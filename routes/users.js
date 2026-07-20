@@ -16,8 +16,10 @@ router.put('/profile', auth, profileUpdateRules, validate, async (req, res) => {
     fields.forEach(f => { if (req.body[f] !== undefined) userUpdate[f] = req.body[f] })
 
     if (Object.keys(userUpdate).length > 0) {
-      // Mark profile as complete only if essential fields are provided
-      const isComplete = !!(req.body.name && req.body.city)
+      // Mark profile as complete only if essential fields (name AND city) are present
+      // or if they were already complete
+      const user = await User.findByPk(req.user.id)
+      const isComplete = user.is_profile_complete || !!(req.body.name && req.body.city)
       await User.update({ ...userUpdate, is_profile_complete: isComplete }, { where: { id: req.user.id } })
     }
 
@@ -27,8 +29,24 @@ router.put('/profile', auth, profileUpdateRules, validate, async (req, res) => {
       techFields.forEach(f => { if (req.body[f] !== undefined) techUpdate[f] = req.body[f] })
 
       if (Object.keys(techUpdate).length > 0) {
-        console.log(`[Profile] Upserting technician details for user ${req.user.id}`)
-        await TechnicianProfile.upsert({ user_id: req.user.id, ...techUpdate })
+        console.log(`[Profile] Updating tech profile for ${req.user.id}`)
+        try {
+          // Use upsert to handle the unique user_id constraint correctly
+          await TechnicianProfile.upsert({
+            user_id: req.user.id,
+            ...techUpdate
+          })
+        } catch (dbError) {
+          console.error('[DB Error]:', dbError.message)
+          // Fallback: find and update
+          let profile = await TechnicianProfile.findOne({ where: { user_id: req.user.id } })
+          if (profile) {
+            await profile.update(techUpdate)
+          } else {
+            const finalCreate = { user_id: req.user.id, category: req.body.category || 'electrician', ...techUpdate }
+            await TechnicianProfile.create(finalCreate)
+          }
+        }
       }
     }
 

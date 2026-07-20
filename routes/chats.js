@@ -52,7 +52,6 @@ router.post('/:job_id', auth, async (req, res) => {
     })
 
     // Notification Logic
-    const job = await Job.findByPk(job_id)
     const recipientId = (sender_id === job.homeowner_id) ? job.technician_id : job.homeowner_id
 
     if (recipientId) {

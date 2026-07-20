@@ -182,8 +182,8 @@ router.put('/:id/accept', auth, async (req, res) => {
     if (homeowner?.fcm_token) {
       await sendNotification(
         homeowner.fcm_token,
-        'Technician Found! 🎉',
-        'A technician has accepted your repair request',
+        'Technician Hired! 🛠️',
+        'A technician has accepted your repair request. Open to chat.',
         { type: 'job_accepted', job_id: job.id.toString() }
       )
     }
