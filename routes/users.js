@@ -16,7 +16,7 @@ router.put('/profile', auth, profileUpdateRules, validate, async (req, res) => {
     fields.forEach(f => { if (req.body[f] !== undefined) userUpdate[f] = req.body[f] })
 
     if (Object.keys(userUpdate).length > 0) {
-      await User.update(userUpdate, { where: { id: req.user.id } })
+      await User.update({ ...userUpdate, is_profile_complete: true }, { where: { id: req.user.id } })
     }
 
     if (req.user.user_type === 'technician') {
@@ -25,7 +25,15 @@ router.put('/profile', auth, profileUpdateRules, validate, async (req, res) => {
       techFields.forEach(f => { if (req.body[f] !== undefined) techUpdate[f] = req.body[f] })
 
       if (Object.keys(techUpdate).length > 0) {
-        await TechnicianProfile.upsert({ user_id: req.user.id, ...techUpdate })
+        // Use findOrCreate + update to ensure only provided fields are changed (partial update)
+        const [profile, created] = await TechnicianProfile.findOrCreate({
+          where: { user_id: req.user.id },
+          defaults: { category: req.body.category || 'electrician', ...techUpdate }
+        })
+
+        if (!created) {
+          await profile.update(techUpdate)
+        }
       }
     }
 

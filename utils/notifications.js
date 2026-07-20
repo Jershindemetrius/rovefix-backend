@@ -5,9 +5,15 @@ async function sendNotification(fcmToken, title, body, data = {}) {
   if (!fcmToken) return
 
   try {
+    // Ensure all data fields are strings for FCM
+    const stringData = {}
+    Object.keys(data).forEach(key => {
+      stringData[key] = String(data[key])
+    })
+
     const message = {
       notification: { title, body },
-      data: { ...data },
+      data: stringData,
       token: fcmToken
     }
 

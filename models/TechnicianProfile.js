@@ -14,7 +14,8 @@ const TechnicianProfile = sequelize.define('TechnicianProfile', {
 
   user_id: {
     type: DataTypes.UUID,
-    allowNull: false    // every technician profile must belong to a user
+    allowNull: false,
+    unique: true       // essential for upsert and data integrity
   },
 
   category: {

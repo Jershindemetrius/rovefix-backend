@@ -145,7 +145,7 @@ router.put('/:id/accept', auth, async (req, res) => {
         technician.fcm_token,
         'Bid Accepted! 🎉',
         'Your bid was chosen. Contact the customer to start.',
-        { type: 'bid_accepted', job_id: job.id }
+        { type: 'bid_accepted', job_id: job.id.toString() }
       )
     }
 

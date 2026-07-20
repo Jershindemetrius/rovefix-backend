@@ -9,6 +9,9 @@ const { sendNotification } = require('../utils/notifications')
 // GET /chats/:job_id
 router.get('/:job_id', auth, async (req, res) => {
   try {
+    const job = await Job.findByPk(req.params.job_id)
+    if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
+
     const messages = await Message.findAll({
       where: { job_id: req.params.job_id },
       include: [{
@@ -18,7 +21,7 @@ router.get('/:job_id', auth, async (req, res) => {
       }],
       order: [['createdAt', 'ASC']]
     })
-    res.json({ success: true, messages })
+    res.json({ success: true, messages, jobStatus: job.status })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }
@@ -30,6 +33,13 @@ router.post('/:job_id', auth, async (req, res) => {
     const { text, is_file, file_url, filename, filesize } = req.body
     const job_id = req.params.job_id
     const sender_id = req.user.id
+
+    const job = await Job.findByPk(job_id)
+    if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
+
+    if (job.status === 'done' || job.status === 'cancelled') {
+        return res.status(400).json({ success: false, message: 'Cannot send message on a closed job' })
+    }
 
     const message = await Message.create({
       job_id,

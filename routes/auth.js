@@ -84,7 +84,7 @@ router.post('/register', registerRules, validate, async (req, res) => {
     res.json({
       success: true,
       token,
-      is_profile_complete: !!(user.name && user.name !== 'User' && user.city),
+      is_profile_complete: user.is_profile_complete,
       user: {
         id: user.id,
         name: user.name,
@@ -183,7 +183,7 @@ router.post('/login', async (req, res) => {
     res.json({
       success: true,
       token,
-      is_profile_complete: !!(user.name && user.name !== 'User' && user.city),
+      is_profile_complete: user.is_profile_complete,
       user: {
         id: user.id,
         name: user.name,

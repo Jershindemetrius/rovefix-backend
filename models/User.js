@@ -74,6 +74,10 @@ const User = sequelize.define('User', {
     type: DataTypes.UUID,
     allowNull: true
   },
+  is_profile_complete: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
   // 🛡️ SECURITY: Brute-force protection
   failed_attempts: {
     type: DataTypes.INTEGER,

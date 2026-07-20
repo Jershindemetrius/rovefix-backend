@@ -218,6 +218,17 @@ router.put('/:id/complete', auth, async (req, res) => {
 
     await job.update({ status: 'done' })
 
+    // Notify technician that they've been paid
+    const tech = await User.findByPk(job.technician_id)
+    if (tech && tech.fcm_token) {
+      await sendNotification(
+        tech.fcm_token,
+        'Service Confirmed! 🏠',
+        `The homeowner has confirmed completion for your service.`,
+        { type: 'job_completed', job_id: job.id.toString() }
+      )
+    }
+
     res.json({ success: true, message: 'Job marked as complete', job })
 
   } catch (error) {
