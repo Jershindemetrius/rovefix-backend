@@ -5,10 +5,10 @@ async function sendNotification(fcmToken, title, body, data = {}) {
   if (!fcmToken) return
 
   try {
-    // Ensure all data fields are strings for FCM
+    // 🛡️ SECURITY: FCM data payload must contain only string values
     const stringData = {}
     Object.keys(data).forEach(key => {
-      stringData[key] = String(data[key])
+      stringData[key] = data[key] ? String(data[key]) : ""
     })
 
     const message = {
@@ -18,9 +18,9 @@ async function sendNotification(fcmToken, title, body, data = {}) {
     }
 
     await admin.messaging().send(message)
-    console.log('Notification sent successfully')
+    console.log(`[FCM] Notification sent successfully to ${fcmToken.substring(0, 10)}...`)
   } catch (error) {
-    console.log('Notification error:', error.message)
+    console.error(`[FCM Error]: ${error.message}`)
   }
 }
 

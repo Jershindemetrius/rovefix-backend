@@ -16,7 +16,9 @@ router.put('/profile', auth, profileUpdateRules, validate, async (req, res) => {
     fields.forEach(f => { if (req.body[f] !== undefined) userUpdate[f] = req.body[f] })
 
     if (Object.keys(userUpdate).length > 0) {
-      await User.update({ ...userUpdate, is_profile_complete: true }, { where: { id: req.user.id } })
+      // Mark profile as complete only if essential fields are provided
+      const isComplete = !!(req.body.name && req.body.city)
+      await User.update({ ...userUpdate, is_profile_complete: isComplete }, { where: { id: req.user.id } })
     }
 
     if (req.user.user_type === 'technician') {
@@ -25,21 +27,14 @@ router.put('/profile', auth, profileUpdateRules, validate, async (req, res) => {
       techFields.forEach(f => { if (req.body[f] !== undefined) techUpdate[f] = req.body[f] })
 
       if (Object.keys(techUpdate).length > 0) {
-        // Use findOrCreate + update to ensure only provided fields are changed (partial update)
-        const [profile, created] = await TechnicianProfile.findOrCreate({
-          where: { user_id: req.user.id },
-          defaults: { category: req.body.category || 'electrician', ...techUpdate }
-        })
-
-        if (!created) {
-          await profile.update(techUpdate)
-        }
+        console.log(`[Profile] Upserting technician details for user ${req.user.id}`)
+        await TechnicianProfile.upsert({ user_id: req.user.id, ...techUpdate })
       }
     }
 
     res.json({ success: true, message: 'Profile updated' })
   } catch (error) {
-    console.error('Update profile error:', error)
+    console.error('[Profile Error]:', error.message, error.stack)
     res.status(500).json({ success: false, message: 'Failed to update profile' })
   }
 })
