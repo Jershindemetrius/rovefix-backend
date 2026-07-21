@@ -179,7 +179,7 @@
                         <div class="flex items-center gap-4">
                             <div class="relative">
                                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-admin-muted text-xs"></i>
-                                <input type="text" id="tableSearch" placeholder="Search by name, phone or ID..." class="pl-12 pr-6 py-3 w-80 rounded-xl text-sm border-white/5" oninput="filterTable()">
+                                <input type="text" id="tableSearch" placeholder="Search data cluster..." class="pl-12 pr-6 py-3 w-80 rounded-xl text-sm border-white/5" oninput="filterTable()">
                             </div>
                         </div>
                         <button onclick="reloadData()" class="p-3 hover:bg-white/5 rounded-xl text-admin-muted hover:text-white transition-all">
@@ -241,6 +241,20 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Image Preview -->
+<div id="imageModal" class="fixed inset-0 z-[70] bg-black/95 flex items-center justify-center hidden p-4" onclick="closeImageModal()">
+    <div class="relative w-full max-w-5xl max-h-[90vh] flex flex-col items-center" onclick="event.stopPropagation()">
+        <div class="w-full flex justify-between items-center mb-4 px-4">
+            <h6 class="text-white font-bold uppercase tracking-widest text-sm" id="imageModalTitle">Document Preview</h6>
+            <button onclick="closeImageModal()" class="text-white/50 hover:text-white"><i class="fa-solid fa-xmark text-3xl"></i></button>
+        </div>
+        <img id="modalImage" src="" alt="Document Preview" class="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl border border-white/10">
+        <div class="mt-6 flex gap-4">
+            <button onclick="closeImageModal()" class="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition-all uppercase text-xs">Close Viewer</button>
         </div>
     </div>
 </div>
@@ -383,21 +397,29 @@
                         return `
                             <tr class="hover:bg-white/[0.02]">
                                 <td class="p-6">
-                                    <p class="font-bold text-white">${item.user?.name}</p>
-                                    <p class="text-[11px] opacity-60 mt-1">${item.user?.phone}</p>
+                                    <p class="font-bold text-white">${item.user?.name || 'Unknown'}</p>
+                                    <p class="text-[11px] opacity-60 mt-1">${item.user?.phone || 'N/A'}</p>
                                 </td>
                                 <td class="p-6 font-medium uppercase text-admin-accent text-[11px] tracking-widest">${item.category}</td>
                                 <td class="p-6">
-                                    <a href="${item.id_doc_url}" target="_blank" class="text-xs text-admin-accent hover:underline flex items-center gap-2">
-                                        <i class="fa-solid fa-id-card"></i> Aadhaar
-                                    </a>
+                                    ${item.id_doc_url ? `
+                                        <div class="group relative w-20 h-12 bg-black rounded-lg overflow-hidden border border-white/10 cursor-pointer" onclick="openImageModal('${item.id_doc_url}', 'ID Document')">
+                                            <img src="${item.id_doc_url}" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all">
+                                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                                                <i class="fa-solid fa-eye text-white text-xs"></i>
+                                            </div>
+                                        </div>
+                                    ` : '<span class="text-xs text-admin-error italic">No ID Doc</span>'}
                                 </td>
                                 <td class="p-6">
                                     ${item.license_doc_url ? `
-                                        <a href="${item.license_doc_url}" target="_blank" class="text-xs text-admin-success hover:underline flex items-center gap-2">
-                                            <i class="fa-solid fa-certificate"></i> License
-                                        </a>
-                                    ` : '<span class="text-xs text-admin-error italic">Not Uploaded</span>'}
+                                        <div class="group relative w-20 h-12 bg-black rounded-lg overflow-hidden border border-white/10 cursor-pointer" onclick="openImageModal('${item.license_doc_url}', 'License Document')">
+                                            <img src="${item.license_doc_url}" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all">
+                                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                                                <i class="fa-solid fa-eye text-white text-xs"></i>
+                                            </div>
+                                        </div>
+                                    ` : '<span class="text-xs text-admin-muted italic">No License</span>'}
                                 </td>
                                 <td class="p-6 text-right space-x-2">
                                     <button onclick="actionTech('${item.id}', 'approve')" class="px-4 py-2 bg-admin-success text-black text-[10px] font-bold rounded-lg uppercase">Approve</button>
@@ -405,7 +427,8 @@
                                 </td>
                             </tr>
                         `;
-                    } else if (type === 'jobs') {
+                    }
+else if (type === 'jobs') {
                         return `
                             <tr class="hover:bg-white/[0.02]">
                                 <td class="p-6 max-w-sm">
@@ -473,6 +496,17 @@
     function closeModal() {
         document.getElementById('userModal').classList.add('hidden');
         selectedUserId = null;
+    }
+
+    function openImageModal(url, title) {
+        document.getElementById('imageModalTitle').textContent = title;
+        document.getElementById('modalImage').src = url;
+        document.getElementById('imageModal').classList.remove('hidden');
+    }
+
+    function closeImageModal() {
+        document.getElementById('imageModal').classList.add('hidden');
+        document.getElementById('modalImage').src = '';
     }
 
     function banUser() {

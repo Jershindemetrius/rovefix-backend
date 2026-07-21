@@ -73,7 +73,10 @@ const apiRoutes = ['/auth', '/jobs', '/users', '/admin', '/chats', '/bids', '/su
 app.use((req, res, next) => {
   const isApiRoute = apiRoutes.some(route => req.path.startsWith(route));
 
-  if (isApiRoute) {
+  // Allow Admin Dashboard to bypass app-key handshake (adminAuth handles its own security)
+  const isAdminRoute = req.path.startsWith('/admin');
+
+  if (isApiRoute && !isAdminRoute) {
     const appKey = req.headers['x-rovefix-app-key'];
     if (appKey !== API_SECRET_KEY) {
       console.warn(`[Security] Blocked unauthorized request from ${req.ip} to ${req.path}`);

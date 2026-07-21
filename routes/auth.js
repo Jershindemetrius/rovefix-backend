@@ -71,7 +71,7 @@ router.post('/register', registerRules, validate, async (req, res) => {
         user_type: user_type || 'homeowner',
         referral_code: generateReferralCode(name || 'RV'),
         referred_by: referredByUserId,
-        is_verified: true
+        is_verified: false // Must be verified by admin if technician
       })
     }
 
