@@ -19,6 +19,7 @@ router.get('/dashboard', adminAuth, async (req, res) => {
       activeJobs: await Job.count({ where: { status: ['matched', 'in_progress'] } }),
       completedJobs: await Job.count({ where: { status: 'done' } }),
       disputedJobs: await Job.count({ where: { status: 'disputed' } }),
+      emergencyJobs: await Job.count({ where: { is_emergency: true, status: ['open', 'matched', 'in_progress'] } }),
       newUsersToday: await User.count({ where: { createdAt: { [Op.gte]: today } } }),
 
       // Calculate Total Revenue

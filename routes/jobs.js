@@ -4,6 +4,7 @@
 const express = require('express')
 const router = express.Router()
 const auth = require('../middleware/auth')  // protects routes — must be logged in
+const reviewCheck = require('../middleware/reviewCheck')
 const Job = require('../models/Job')
 const User = require('../models/User')
 const TechnicianProfile = require('../models/TechnicianProfile')
@@ -13,11 +14,14 @@ const { postJobRules, validate } = require('../middleware/validator')
 
 // POST /jobs
 // Homeowner posts a new repair job
-router.post('/', auth, postJobRules, validate, async (req, res) => {
+router.post('/', auth, reviewCheck, postJobRules, validate, async (req, res) => {
   try {
     // auth middleware already verified the token
     // req.user.id is the homeowner's ID from the token
-    const { category, description, location, latitude, longitude, photo_url } = req.body
+    const { category, description, location, latitude, longitude, photo_url, is_emergency } = req.body
+
+    // Generate a random 4-digit PIN for site arrival verification
+    const startPin = Math.floor(1000 + Math.random() * 9000).toString()
 
     const job = await Job.create({
       homeowner_id: req.user.id,
@@ -27,7 +31,9 @@ router.post('/', auth, postJobRules, validate, async (req, res) => {
       latitude: latitude ? parseFloat(latitude) : null,
       longitude: longitude ? parseFloat(longitude) : null,
       photo_url,
-      status: 'open'
+      status: 'open',
+      start_pin: startPin,
+      is_emergency: is_emergency || false
     })
 
     // Notify technicians matching category and online status
@@ -70,7 +76,10 @@ router.get('/open', auth, async (req, res) => {
 
     const jobs = await Job.findAll({
       where: { status: 'open' },         // only show open jobs
-      order: [['createdAt', 'DESC']],    // newest first
+      order: [
+        ['is_emergency', 'DESC'],        // Emergency jobs first
+        ['createdAt', 'DESC']            // Then newest first
+      ],
       limit,
       offset,
       include: [{
@@ -241,6 +250,12 @@ router.put('/:id/complete', auth, async (req, res) => {
 // Technician marks the job as finished (awaiting homeowner confirmation)
 router.put('/:id/finish', auth, async (req, res) => {
   try {
+    const { completion_photo_url } = req.body
+
+    if (!completion_photo_url) {
+      return res.status(400).json({ success: false, message: 'Completion photo is required to finish the work' })
+    }
+
     const job = await Job.findByPk(req.params.id)
 
     if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
@@ -254,15 +269,18 @@ router.put('/:id/finish', auth, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Job must be in progress to finish' })
     }
 
-    await job.update({ status: 'finished' })
+    await job.update({
+      status: 'finished',
+      completion_photo_url
+    })
 
     // Notify homeowner
     const homeowner = await User.findByPk(job.homeowner_id)
     if (homeowner?.fcm_token) {
       await sendNotification(
         homeowner.fcm_token,
-        'Work Finished! 🏠',
-        'Technician has marked the work as finished. Please confirm.',
+        'Work Completed! 📸',
+        'Technician has finished the work and uploaded a photo. Please verify and confirm.',
         { type: 'job_finished', job_id: job.id.toString() }
       )
     }
@@ -307,7 +325,7 @@ router.put('/:id/quote', auth, async (req, res) => {
 
 // PUT /jobs/:id/approve-quote
 // Homeowner approves the technician's quote
-router.put('/:id/approve-quote', auth, async (req, res) => {
+router.put('/:id/approve-quote', auth, reviewCheck, async (req, res) => {
   try {
     const job = await Job.findByPk(req.params.id)
     if (!job || job.homeowner_id !== req.user.id) {
@@ -322,7 +340,7 @@ router.put('/:id/approve-quote', auth, async (req, res) => {
     await job.update({
       price: newPrice,
       is_price_approved: true,
-      status: 'in_progress'
+      status: 'matched' // Changed from 'in_progress' to wait for PIN verification at site
     })
 
     // Notify technician
@@ -331,12 +349,53 @@ router.put('/:id/approve-quote', auth, async (req, res) => {
       await sendNotification(
         tech.fcm_token,
         'Quote Approved! ✅',
-        'Customer approved your price. You can start the work.',
+        'Customer approved your price. Please visit the site and enter the 4-digit PIN to start work.',
         { type: 'quote_approved', job_id: job.id.toString() }
       )
     }
 
-    res.json({ success: true, message: 'Quote approved' })
+    res.json({ success: true, message: 'Quote approved. Waiting for technician arrival.', start_pin: job.start_pin })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// PUT /jobs/:id/start
+// Technician enters PIN at site to start the work
+router.put('/:id/start', auth, async (req, res) => {
+  try {
+    const { pin } = req.body
+    if (!pin) return res.status(400).json({ success: false, message: 'PIN is required to start work' })
+
+    const job = await Job.findByPk(req.params.id)
+    if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
+
+    if (job.technician_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized: You are not the assigned technician' })
+    }
+
+    if (job.status !== 'matched') {
+      return res.status(400).json({ success: false, message: 'Job must be in matched state to start' })
+    }
+
+    if (job.start_pin !== pin.toString()) {
+      return res.status(401).json({ success: false, message: 'Invalid Verification PIN. Please ask the homeowner for the correct 4-digit code.' })
+    }
+
+    await job.update({ status: 'in_progress' })
+
+    // Notify homeowner
+    const homeowner = await User.findByPk(job.homeowner_id)
+    if (homeowner?.fcm_token) {
+      await sendNotification(
+        homeowner.fcm_token,
+        'Work Started! ⚡',
+        'Technician has verified the PIN and started the work.',
+        { type: 'job_started', job_id: job.id.toString() }
+      )
+    }
+
+    res.json({ success: true, message: 'Work started successfully', job })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }
@@ -364,6 +423,7 @@ router.put('/:id/dispute', auth, async (req, res) => {
 // Homeowner cancels an open request
 router.delete('/:id', auth, async (req, res) => {
   try {
+    const { reason } = req.body
     const job = await Job.findByPk(req.params.id)
     if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
 
@@ -372,9 +432,13 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized' })
     }
 
-    // Logic: Only "open" jobs can be deleted/cancelled
-    if (job.status !== 'open') {
-      return res.status(400).json({ success: false, message: 'Cannot cancel an assigned or finished job' })
+    // Logic: Only "open" or "matched" jobs can be deleted/cancelled by homeowner
+    if (job.status !== 'open' && job.status !== 'matched') {
+      return res.status(400).json({ success: false, message: 'Cannot cancel an active or finished job' })
+    }
+
+    if (reason) {
+      await job.update({ cancellation_reason: reason })
     }
 
     await job.destroy()

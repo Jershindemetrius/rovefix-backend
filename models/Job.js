@@ -37,6 +37,11 @@ const Job = sequelize.define('Job', {
     allowNull: true         // Changed to TEXT to support Base64 strings
   },
 
+  completion_photo_url: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+
   location: {
     type: DataTypes.STRING,
     allowNull: false        // address or area name
@@ -73,6 +78,21 @@ const Job = sequelize.define('Job', {
   },
 
   dispute_reason: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+
+  start_pin: {
+    type: DataTypes.STRING(4),
+    allowNull: true
+  },
+
+  is_emergency: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+
+  cancellation_reason: {
     type: DataTypes.TEXT,
     allowNull: true
   }

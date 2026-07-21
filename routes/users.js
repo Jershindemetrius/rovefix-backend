@@ -220,4 +220,34 @@ router.delete('/profile', auth, async (req, res) => {
   }
 })
 
+// GET /users/pending-review
+// Returns the first completed job that needs a review
+router.get('/pending-review', auth, async (req, res) => {
+  try {
+    if (req.user.user_type !== 'homeowner') {
+      return res.json({ success: true, pendingJob: null })
+    }
+
+    const completedJobs = await Job.findAll({
+      where: { homeowner_id: req.user.id, status: 'done' },
+      attributes: ['id', 'category', 'description', 'price', 'completion_photo_url'],
+      include: [{ model: User, as: 'technician', attributes: ['name', 'photo_url'] }]
+    })
+
+    const jobIds = completedJobs.map(j => j.id)
+    if (jobIds.length === 0) return res.json({ success: true, pendingJob: null })
+
+    const reviews = await Review.findAll({
+      where: { job_id: jobIds, reviewer_id: req.user.id }
+    })
+
+    const reviewedJobIds = reviews.map(r => r.job_id)
+    const pendingJob = completedJobs.find(j => !reviewedJobIds.includes(j.id))
+
+    res.json({ success: true, pendingJob: pendingJob || null })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 module.exports = router
