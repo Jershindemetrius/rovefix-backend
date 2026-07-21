@@ -33,12 +33,23 @@ app.get('/health', (req, res) => res.json({ status: 'online', version: '1.1.0' }
 // 2. MASTER UPDATE CONTROL
 // ==========================================================
 app.get('/app-version', (req, res) => {
+  // Read current app version from query (v)
+  const clientVersion = parseInt(req.query.v) || 0;
+
+  // Define our latest version
+  const LATEST_VERSION_CODE = 3;
+  const LATEST_VERSION_NAME = "1.0.1";
+
+  // Logic: Only suggest update if client is actually behind
+  const shouldUpdate = LATEST_VERSION_CODE > clientVersion;
+
   res.json({
-    latest_version_code: 3,
-    latest_version_name: "1.0.1",
+    latest_version_code: LATEST_VERSION_CODE,
+    latest_version_name: LATEST_VERSION_NAME,
     update_required: false,
+    show_dialog: shouldUpdate, // Explicit flag for the app
     download_url: "https://rovefix-backend.onrender.com/download-app",
-    release_notes: "Stability improvements, safety shield, and mandatory review workflow."
+    release_notes: "v1.0.1: Stability improvements, safety shield, and mandatory review workflow."
   })
 })
 
