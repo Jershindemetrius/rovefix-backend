@@ -20,6 +20,9 @@ router.post('/', auth, reviewCheck, postJobRules, validate, async (req, res) => 
     // req.user.id is the homeowner's ID from the token
     const { category, description, location, latitude, longitude, photo_url, is_emergency } = req.body
 
+    const lat = latitude ? parseFloat(latitude) : null
+    const lng = longitude ? parseFloat(longitude) : null
+
     // Generate a random 4-digit PIN for site arrival verification
     const startPin = Math.floor(1000 + Math.random() * 9000).toString()
 
@@ -28,17 +31,21 @@ router.post('/', auth, reviewCheck, postJobRules, validate, async (req, res) => 
       category,
       description,
       location,
-      latitude: latitude ? parseFloat(latitude) : null,
-      longitude: longitude ? parseFloat(longitude) : null,
+      latitude: lat,
+      longitude: lng,
       photo_url,
       status: 'open',
       start_pin: startPin,
       is_emergency: is_emergency || false
     })
 
-    // Notify technicians matching category and online status
+    // Notify technicians matching category, online status AND within 20km radius
+    const query = {
+      user_type: 'technician'
+    }
+
     const technicians = await User.findAll({
-      where: { user_type: 'technician' },
+      where: query,
       include: [{
         model: TechnicianProfile,
         where: {
@@ -49,10 +56,18 @@ router.post('/', auth, reviewCheck, postJobRules, validate, async (req, res) => 
     })
 
     for (const tech of technicians) {
-      if (tech.fcm_token) {
+      let isNearby = true
+
+      // If job has coordinates and tech has last known location, filter by distance
+      if (lat && lng && tech.TechnicianProfile && tech.TechnicianProfile.last_lat && tech.TechnicianProfile.last_lng) {
+        const distance = calculateDistance(lat, lng, tech.TechnicianProfile.last_lat, tech.TechnicianProfile.last_lng)
+        if (distance > 20) isNearby = false
+      }
+
+      if (isNearby && tech.fcm_token) {
         await sendNotification(
           tech.fcm_token,
-          'New Job Request 🔧',
+          is_emergency ? '🚨 EMERGENCY Job Request' : 'New Job Request 🔧',
           `New ${category} job near you`,
           { type: 'new_job', job_id: job.id.toString() }
         )
@@ -68,26 +83,45 @@ router.post('/', auth, reviewCheck, postJobRules, validate, async (req, res) => 
 })
 
 // GET /jobs/open
-// Technician sees all open jobs
+// Technician sees all open jobs (Filtered by 20km radius)
 router.get('/open', auth, async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 20
     const offset = parseInt(req.query.offset) || 0
+    const techLat = req.query.lat ? parseFloat(req.query.lat) : null
+    const techLng = req.query.lng ? parseFloat(req.query.lng) : null
 
-    const jobs = await Job.findAll({
-      where: { status: 'open' },         // only show open jobs
+    // Update technician's last known location if provided
+    if (techLat && techLng) {
+      await TechnicianProfile.update(
+        { last_lat: techLat, last_lng: techLng },
+        { where: { user_id: req.user.id } }
+      )
+    }
+
+    let jobs = await Job.findAll({
+      where: { status: 'open' },
       order: [
-        ['is_emergency', 'DESC'],        // Emergency jobs first
-        ['createdAt', 'DESC']            // Then newest first
+        ['is_emergency', 'DESC'],
+        ['createdAt', 'DESC']
       ],
       limit,
       offset,
       include: [{
         model: User,
         as: 'homeowner',
-        attributes: ['name', 'city']     // only send name and city, not password etc
+        attributes: ['name', 'city', 'homeowner_avg_rating']
       }]
     })
+
+    // Filter by 20km radius if tech coordinates are available
+    if (techLat && techLng) {
+      jobs = jobs.filter(job => {
+        if (!job.latitude || !job.longitude) return true // Show jobs without coordinates to everyone
+        const distance = calculateDistance(techLat, techLng, job.latitude, job.longitude)
+        return distance <= 20
+      })
+    }
 
     res.json({ success: true, jobs })
 
@@ -449,3 +483,15 @@ router.delete('/:id', auth, async (req, res) => {
 })
 
 module.exports = router
+
+// --- HELPERS ---
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371 // Earth radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}

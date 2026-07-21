@@ -5,6 +5,7 @@ const User = require('../models/User')
 const TechnicianProfile = require('../models/TechnicianProfile')
 const Job = require('../models/Job')
 const Review = require('../models/Review')
+const HomeownerReview = require('../models/HomeownerReview')
 const Report = require('../models/Report')
 const { profileUpdateRules, validate } = require('../middleware/validator')
 
@@ -61,7 +62,7 @@ router.put('/profile', auth, profileUpdateRules, validate, async (req, res) => {
 router.get('/profile', auth, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified', 'photo_url']
+      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified', 'photo_url', 'homeowner_avg_rating', 'homeowner_review_count']
     })
 
     let techProfile = null
@@ -245,6 +246,73 @@ router.get('/pending-review', auth, async (req, res) => {
     const pendingJob = completedJobs.find(j => !reviewedJobIds.includes(j.id))
 
     res.json({ success: true, pendingJob: pendingJob || null })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// PUT /users/location
+// Technician heartbeat to update live location
+router.put('/location', auth, async (req, res) => {
+  try {
+    const { lat, lng } = req.body
+    if (!lat || !lng) return res.status(400).json({ success: false, message: 'Coordinates required' })
+
+    if (req.user.user_type !== 'technician') {
+        return res.status(403).json({ success: false, message: 'Only technicians have live tracking' })
+    }
+
+    await TechnicianProfile.update(
+      { last_lat: lat, last_lng: lng },
+      { where: { user_id: req.user.id } }
+    )
+
+    res.json({ success: true })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// POST /users/review-homeowner
+// Technician reviews the homeowner after work completion
+router.post('/review-homeowner', auth, async (req, res) => {
+  try {
+    const { job_id, rating, comment } = req.body
+
+    if (req.user.user_type !== 'technician') {
+        return res.status(403).json({ success: false, message: 'Only technicians can review homeowners' })
+    }
+
+    const job = await Job.findByPk(job_id)
+    if (!job || job.technician_id !== req.user.id) {
+        return res.status(404).json({ success: false, message: 'Job not found or unauthorized' })
+    }
+
+    if (job.status !== 'done') {
+        return res.status(400).json({ success: false, message: 'Job must be fully completed first' })
+    }
+
+    const existing = await HomeownerReview.findOne({ where: { job_id } })
+    if (existing) return res.status(400).json({ success: false, message: 'Already reviewed this client' })
+
+    const review = await HomeownerReview.create({
+      job_id,
+      technician_id: req.user.id,
+      homeowner_id: job.homeowner_id,
+      rating: parseInt(rating),
+      comment
+    })
+
+    // Update homeowner stats
+    const allReviews = await HomeownerReview.findAll({ where: { homeowner_id: job.homeowner_id } })
+    const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length
+
+    await User.update(
+      { homeowner_avg_rating: avgRating, homeowner_review_count: allReviews.length },
+      { where: { id: job.homeowner_id } }
+    )
+
+    res.json({ success: true, review })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
   }

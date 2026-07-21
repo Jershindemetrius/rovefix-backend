@@ -9,6 +9,7 @@ const Message = require('./Message')
 const Bid = require('./Bid')
 const SupportTicket = require('./SupportTicket')
 const Report = require('./Report')
+const HomeownerReview = require('./HomeownerReview')
 
 // A job belongs to a homeowner (who is a User)
 Job.belongsTo(User, { foreignKey: 'homeowner_id', as: 'homeowner' })
@@ -50,4 +51,10 @@ User.hasMany(Report, { foreignKey: 'reported_id', as: 'received_reports' })
 Report.belongsTo(User, { foreignKey: 'reporter_id', as: 'reporter' })
 Report.belongsTo(User, { foreignKey: 'reported_id', as: 'reported' })
 
-module.exports = { User, Job, TechnicianProfile, Review, Message, Bid, SupportTicket, Report }
+// Reciprocal Trust (Technicians review Homeowners)
+User.hasMany(HomeownerReview, { foreignKey: 'homeowner_id', as: 'received_homeowner_reviews' })
+HomeownerReview.belongsTo(User, { foreignKey: 'homeowner_id', as: 'homeowner' })
+HomeownerReview.belongsTo(User, { foreignKey: 'technician_id', as: 'reviewer' })
+Job.hasOne(HomeownerReview, { foreignKey: 'job_id' })
+
+module.exports = { User, Job, TechnicianProfile, Review, Message, Bid, SupportTicket, Report, HomeownerReview }

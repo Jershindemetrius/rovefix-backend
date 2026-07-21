@@ -34,11 +34,11 @@ app.get('/health', (req, res) => res.json({ status: 'online', version: '1.1.0' }
 // ==========================================================
 app.get('/app-version', (req, res) => {
   res.json({
-    latest_version_code: 2,
-    latest_version_name: "1.1.0",
+    latest_version_code: 3,
+    latest_version_name: "1.0.1",
     update_required: false,
     download_url: "https://rovefix-backend.onrender.com/download-app",
-    release_notes: "Minor stability improvements and bug fixes."
+    release_notes: "Stability improvements, safety shield, and mandatory review workflow."
   })
 })
 

@@ -66,6 +66,16 @@ const TechnicianProfile = sequelize.define('TechnicianProfile', {
   is_online: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+
+  last_lat: {
+    type: DataTypes.FLOAT,
+    allowNull: true
+  },
+
+  last_lng: {
+    type: DataTypes.FLOAT,
+    allowNull: true
   }
 
 }, {

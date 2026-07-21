@@ -86,6 +86,16 @@ const User = sequelize.define('User', {
   lockout_until: {
     type: DataTypes.DATE,
     allowNull: true
+  },
+
+  homeowner_avg_rating: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0.0
+  },
+
+  homeowner_review_count: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   }
 }, {
   indexes: [
