@@ -58,7 +58,7 @@ const Job = sequelize.define('Job', {
   },
 
   status: {
-    type: DataTypes.ENUM('open', 'matched', 'in_progress', 'finished', 'done', 'disputed'),
+    type: DataTypes.ENUM('open', 'matched', 'in_progress', 'work_completed', 'done', 'disputed'),
     defaultValue: 'open'   // all jobs start as open
   },
 

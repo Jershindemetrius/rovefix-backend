@@ -59,6 +59,7 @@ router.post('/:job_id', auth, async (req, res) => {
       if (recipient && recipient.fcm_token) {
         const notifyText = is_file ? `📷 Sent a file: ${filename}` : text
         await sendNotification(
+          recipientId,
           recipient.fcm_token,
           'New Message 💬',
           notifyText.substring(0, 50),

@@ -199,6 +199,31 @@ router.get('/jobs', adminAuth, async (req, res) => {
   }
 })
 
+// ⚡ ADMIN JOB OVERRIDES
+router.put('/jobs/:id/force-complete', adminAuth, async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id)
+    if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
+
+    await job.update({ status: 'done' })
+    res.json({ success: true, message: 'Job forcibly marked as DONE' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+router.put('/jobs/:id/cancel', adminAuth, async (req, res) => {
+  try {
+    const job = await Job.findByPk(req.params.id)
+    if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
+
+    await job.destroy()
+    res.json({ success: true, message: 'Job forcibly CANCELLED/REMOVED' })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 // 🚀 DEPLOYMENT STATUS (For Verification)
 router.get('/status', adminAuth, (req, res) => {
   res.json({

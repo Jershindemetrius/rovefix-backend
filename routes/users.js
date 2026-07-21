@@ -6,6 +6,7 @@ const TechnicianProfile = require('../models/TechnicianProfile')
 const Job = require('../models/Job')
 const Review = require('../models/Review')
 const HomeownerReview = require('../models/HomeownerReview')
+const Notification = require('../models/Notification')
 const Report = require('../models/Report')
 const { profileUpdateRules, validate } = require('../middleware/validator')
 
@@ -318,4 +319,117 @@ router.post('/review-homeowner', auth, async (req, res) => {
   }
 })
 
+// GET /users/notifications
+// Fetch in-app notification history
+router.get('/notifications', auth, async (req, res) => {
+  try {
+    const notifications = await Notification.findAll({
+      where: { user_id: req.user.id },
+      order: [['createdAt', 'DESC']],
+      limit: 20
+    })
+    res.json({ success: true, notifications })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// PUT /users/notifications/read
+// Mark notifications as read
+router.put('/notifications/read', auth, async (req, res) => {
+  try {
+    const { notification_id } = req.body
+    const where = { user_id: req.user.id }
+    if (notification_id) where.id = notification_id
+
+    await Notification.update({ is_read: true }, { where })
+    res.json({ success: true })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// PUT /users/status
+// Toggle technician availability (online/offline)
+router.put('/status', auth, async (req, res) => {
+  try {
+    const { is_online } = req.body
+    if (req.user.user_type !== 'technician') {
+        return res.status(403).json({ success: false, message: 'Only technicians have a status toggle' })
+    }
+
+    await TechnicianProfile.update(
+      { is_online: !!is_online },
+      { where: { user_id: req.user.id } }
+    )
+
+    res.json({ success: true, is_online })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
+// GET /users/nearby
+// Find online technicians within 20km for a category
+router.get('/nearby', auth, async (req, res) => {
+  try {
+    const { category, lat, lng } = req.query
+    if (!category || !lat || !lng) {
+        return res.status(400).json({ success: false, message: 'Category and coordinates required' })
+    }
+
+    const technicians = await User.findAll({
+      where: { user_type: 'technician' },
+      attributes: ['id', 'name', 'photo_url', 'homeowner_avg_rating'], // Shared rating field used for techs too
+      include: [{
+        model: TechnicianProfile,
+        where: {
+          category,
+          is_online: true,
+          approved: true
+        },
+        attributes: ['avg_rating', 'total_jobs', 'years_experience', 'last_lat', 'last_lng']
+      }]
+    })
+
+    const cLat = parseFloat(lat)
+    const cLng = parseFloat(lng)
+
+    // Filter by 20km radius
+    const nearby = technicians.filter(tech => {
+      const p = tech.TechnicianProfile
+      if (!p.last_lat || !p.last_lng) return false
+
+      const distance = calculateDistance(cLat, cLng, p.last_lat, p.last_lng)
+      return distance <= 20
+    }).map(tech => {
+        // Flatten for easy consumption
+        return {
+            id: tech.id,
+            name: tech.name,
+            photo_url: tech.photo_url,
+            rating: tech.TechnicianProfile.avg_rating,
+            total_jobs: tech.TechnicianProfile.total_jobs,
+            experience: tech.TechnicianProfile.years_experience
+        }
+    })
+
+    res.json({ success: true, technicians: nearby })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+})
+
 module.exports = router
+
+// --- HELPERS ---
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371 // Earth radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}

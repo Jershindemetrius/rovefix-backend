@@ -351,7 +351,7 @@
             head.innerHTML = '<th class="p-6">Candidate</th><th class="p-6">Category</th><th class="p-6">ID Document</th><th class="p-6">License Doc</th><th class="p-6 text-right">Actions</th>';
         } else if (type === 'jobs') {
             endpoint = '/jobs';
-            head.innerHTML = '<th class="p-6">Job Description</th><th class="p-6">Location</th><th class="p-6">Price</th><th class="p-6">Status</th><th class="p-6 text-right">Posted</th>';
+            head.innerHTML = '<th class="p-6">Job Description</th><th class="p-6">Location</th><th class="p-6">Status</th><th class="p-6 text-center">Proof</th><th class="p-6 text-right">Actions</th>';
         } else if (type === 'reports') {
             endpoint = '/reports';
             head.innerHTML = '<th class="p-6">Reporter</th><th class="p-6">Reported User</th><th class="p-6">Reason</th><th class="p-6">Status</th><th class="p-6 text-right">Actions</th>';
@@ -427,23 +427,37 @@
                                 </td>
                             </tr>
                         `;
-                    }
-else if (type === 'jobs') {
+                    } else if (type === 'jobs') {
                         return `
                             <tr class="hover:bg-white/[0.02]">
                                 <td class="p-6 max-w-sm">
                                     <p class="font-bold text-white truncate">${item.description}</p>
-                                    <p class="text-[10px] font-bold text-admin-accent uppercase mt-1">${item.category}</p>
+                                    <p class="text-[10px] font-bold text-admin-accent uppercase mt-1">₹${item.price || 'Pending'} • ${item.category}</p>
                                 </td>
-                                <td class="p-6 text-xs">${item.location}</td>
-                                <td class="p-6 font-bold text-white">₹${item.price || '0'}</td>
+                                <td class="p-6 text-xs">
+                                    <p class="text-white">${item.location}</p>
+                                    <p class="text-[10px] opacity-40 mt-1">${new Date(item.createdAt).toLocaleString()}</p>
+                                </td>
                                 <td class="p-6">
-                                    <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter bg-white/10 text-white">${item.status}</span>
+                                    <span class="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-tighter ${item.status === 'done' ? 'bg-admin-success/20 text-admin-success' : 'bg-white/10 text-white'}">${item.status.replace('_', ' ')}</span>
                                 </td>
-                                <td class="p-6 text-right text-xs opacity-60">${new Date(item.createdAt).toLocaleDateString()}</td>
+                                <td class="p-6 text-center">
+                                    ${item.completion_photo_url ? `
+                                        <div class="inline-block relative w-12 h-12 bg-black rounded-lg overflow-hidden border border-white/10 cursor-pointer" onclick="openImageModal('${item.completion_photo_url}', 'Completion Proof')">
+                                            <img src="${item.completion_photo_url}" class="w-full h-full object-cover opacity-60 hover:opacity-100 transition-all">
+                                        </div>
+                                    ` : '<span class="text-[10px] opacity-20">—</span>'}
+                                </td>
+                                <td class="p-6 text-right space-x-2">
+                                    ${item.status !== 'done' ? `
+                                        <button onclick="actionJob('${item.id}', 'force-complete')" class="p-2 bg-admin-success/10 text-admin-success rounded-lg hover:bg-admin-success hover:text-black transition-all" title="Force Complete"><i class="fa-solid fa-check-double text-xs"></i></button>
+                                        <button onclick="actionJob('${item.id}', 'cancel')" class="p-2 bg-admin-error/10 text-admin-error rounded-lg hover:bg-admin-error hover:text-white transition-all" title="Terminate"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                    ` : '<span class="text-[10px] font-bold opacity-30">LOCKED</span>'}
+                                </td>
                             </tr>
                         `;
-                    } else if (type === 'reports') {
+                    }
+else if (type === 'reports') {
                         return `
                             <tr class="hover:bg-white/[0.02]">
                                 <td class="p-6">
@@ -520,6 +534,21 @@ else if (type === 'jobs') {
                 alert("User purged from system.");
                 closeModal();
                 reloadData();
+            }
+        });
+    }
+
+    function actionJob(id, type) {
+        const msg = type === 'force-complete' ? "FORCE MARK AS DONE?" : "PERMANENTLY REMOVE JOB?";
+        if (!confirm(msg)) return;
+
+        fetch(`${API_URL}/jobs/${id}/${type}`, {
+            method: 'PUT',
+            headers: { 'Authorization': currentAuthKey }
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                alert("Override Successful.");
+                loadTableData('jobs');
             }
         });
     }

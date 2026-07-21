@@ -10,6 +10,8 @@ const Bid = require('./Bid')
 const SupportTicket = require('./SupportTicket')
 const Report = require('./Report')
 const HomeownerReview = require('./HomeownerReview')
+const Notification = require('./Notification')
+const JobInvitation = require('./JobInvitation')
 
 // A job belongs to a homeowner (who is a User)
 Job.belongsTo(User, { foreignKey: 'homeowner_id', as: 'homeowner' })
@@ -57,4 +59,12 @@ HomeownerReview.belongsTo(User, { foreignKey: 'homeowner_id', as: 'homeowner' })
 HomeownerReview.belongsTo(User, { foreignKey: 'technician_id', as: 'reviewer' })
 Job.hasOne(HomeownerReview, { foreignKey: 'job_id' })
 
-module.exports = { User, Job, TechnicianProfile, Review, Message, Bid, SupportTicket, Report, HomeownerReview }
+// Notification & Invitation Logic
+User.hasMany(Notification, { foreignKey: 'user_id' })
+Notification.belongsTo(User, { foreignKey: 'user_id' })
+
+Job.hasMany(JobInvitation, { foreignKey: 'job_id' })
+JobInvitation.belongsTo(Job, { foreignKey: 'job_id' })
+JobInvitation.belongsTo(User, { foreignKey: 'technician_id', as: 'technician' })
+
+module.exports = { User, Job, TechnicianProfile, Review, Message, Bid, SupportTicket, Report, HomeownerReview, Notification, JobInvitation }

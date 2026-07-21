@@ -52,6 +52,7 @@ router.post('/:job_id', auth, placeBidRules, validate, async (req, res) => {
     const homeowner = await User.findByPk(job.homeowner_id)
     if (homeowner && homeowner.fcm_token) {
       await sendNotification(
+        job.homeowner_id,
         homeowner.fcm_token,
         'New Bid Received! 💰',
         `A technician offered ₹${price} for your repair`,
@@ -142,6 +143,7 @@ router.put('/:id/accept', auth, async (req, res) => {
     const technician = await User.findByPk(bid.technician_id)
     if (technician && technician.fcm_token) {
       await sendNotification(
+        bid.technician_id,
         technician.fcm_token,
         'Bid Accepted! 🎉',
         'Your bid was chosen. Contact the customer to start.',

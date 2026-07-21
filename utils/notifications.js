@@ -1,7 +1,23 @@
 // Helper to send push notifications via FCM
 const admin = require('../firebase-admin')
+const Notification = require('../models/Notification')
 
-async function sendNotification(fcmToken, title, body, data = {}) {
+async function sendNotification(userId, fcmToken, title, body, data = {}) {
+  // 1. Save to Database for In-App Inbox (Always do this if userId provided)
+  if (userId) {
+    try {
+      await Notification.create({
+        user_id: userId,
+        title,
+        body,
+        data
+      })
+    } catch (dbErr) {
+      console.error('[Notification DB Error]:', dbErr.message)
+    }
+  }
+
+  // 2. Send Push Notification via Firebase
   if (!fcmToken) return
 
   try {
