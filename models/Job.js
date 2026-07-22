@@ -102,7 +102,7 @@ const Job = sequelize.define('Job', {
     beforeValidate: (job) => {
       if (!job.start_pin) {
         // Generate a random 4-digit PIN for site arrival verification
-        job.start_pin = Math.floor(1000 + Math.random() * 9000).toString()
+        job.start_pin = Math.floor(1000 + Math.random() * (9999 - 1000 + 1) + 1000).toString()
       }
     }
   },

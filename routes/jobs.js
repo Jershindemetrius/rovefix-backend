@@ -21,6 +21,9 @@ router.post('/', auth, reviewCheck, postJobRules, validate, async (req, res) => 
     const lat = latitude ? parseFloat(latitude) : null
     const lng = longitude ? parseFloat(longitude) : null
 
+    // Explicitly generate PIN if model hook fails for any reason
+    const startPin = Math.floor(1000 + Math.random() * 9000).toString()
+
     const job = await Job.create({
       homeowner_id: req.user.id,
       category,
@@ -30,6 +33,7 @@ router.post('/', auth, reviewCheck, postJobRules, validate, async (req, res) => 
       longitude: lng,
       photo_url,
       status: 'open',
+      start_pin: startPin,
       is_emergency: is_emergency || false
     })
 
@@ -169,6 +173,13 @@ router.get('/:id', auth, async (req, res) => {
       ]
     })
     if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
+
+    // AUTO-REPAIR: If legacy job is missing a PIN, generate it now
+    if (!job.start_pin) {
+      const newPin = Math.floor(1000 + Math.random() * 9000).toString()
+      await job.update({ start_pin: newPin })
+    }
+
     res.json({ success: true, job })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })

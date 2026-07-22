@@ -18,6 +18,12 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'))
 })
 
+// Legal & Info Pages
+app.get('/privacy', (req, res) => res.sendFile(path.join(__dirname, 'public', 'privacy.html')))
+app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, 'public', 'terms.html')))
+app.get('/about', (req, res) => res.sendFile(path.join(__dirname, 'public', 'about.html')))
+app.get('/safety', (req, res) => res.sendFile(path.join(__dirname, 'public', 'safety.html')))
+
 // APK Download Route
 app.get('/download-app', (req, res) => {
   // Directly redirect to your official GitHub release for the fastest download
