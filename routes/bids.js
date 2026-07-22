@@ -119,6 +119,12 @@ router.put('/:id/accept', auth, async (req, res) => {
 
     // Update job
     const job = bid.Job
+
+    // Ensure PIN exists for legacy jobs
+    if (!job.start_pin) {
+      await job.update({ start_pin: Math.floor(1000 + Math.random() * 9000).toString() })
+    }
+
     await job.update({
       technician_id: bid.technician_id,
       status: 'matched',

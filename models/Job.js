@@ -98,6 +98,14 @@ const Job = sequelize.define('Job', {
   }
 
 }, {
+  hooks: {
+    beforeValidate: (job) => {
+      if (!job.start_pin) {
+        // Generate a random 4-digit PIN for site arrival verification
+        job.start_pin = Math.floor(1000 + Math.random() * 9000).toString()
+      }
+    }
+  },
   indexes: [
     { fields: ['homeowner_id'] },
     { fields: ['technician_id'] },

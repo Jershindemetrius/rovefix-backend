@@ -21,9 +21,6 @@ router.post('/', auth, reviewCheck, postJobRules, validate, async (req, res) => 
     const lat = latitude ? parseFloat(latitude) : null
     const lng = longitude ? parseFloat(longitude) : null
 
-    // Generate a random 4-digit PIN for site arrival verification
-    const startPin = Math.floor(1000 + Math.random() * 9000).toString()
-
     const job = await Job.create({
       homeowner_id: req.user.id,
       category,
@@ -33,7 +30,6 @@ router.post('/', auth, reviewCheck, postJobRules, validate, async (req, res) => 
       longitude: lng,
       photo_url,
       status: 'open',
-      start_pin: startPin,
       is_emergency: is_emergency || false
     })
 
@@ -213,6 +209,11 @@ router.put('/:id/accept', auth, async (req, res) => {
     }
 
     // Update the job — assign this technician and change status
+    // Ensure PIN exists for legacy jobs
+    if (!job.start_pin) {
+      await job.update({ start_pin: Math.floor(1000 + Math.random() * 9000).toString() })
+    }
+
     await job.update({
       technician_id: req.user.id,
       status: 'matched',
@@ -372,6 +373,11 @@ router.put('/:id/approve-quote', auth, reviewCheck, async (req, res) => {
     const newPrice = parseFloat(job.quoted_price)
     if (isNaN(newPrice)) {
         return res.status(400).json({ success: false, message: 'Invalid quoted price' })
+    }
+
+    // Ensure PIN exists for legacy jobs
+    if (!job.start_pin) {
+      await job.update({ start_pin: Math.floor(1000 + Math.random() * 9000).toString() })
     }
 
     await job.update({
