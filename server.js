@@ -115,9 +115,27 @@ require('./database')
 require('./models/associations')
 const sequelize = require('./database')
 
-sequelize.sync({ alter: true }).then(() => {
-  console.log('✅ Database Synchronized')
-}).catch(err => console.error('❌ Database Sync Failed:', err))
+// Data Migration: Ensure ENUM and status consistency before sync
+const runPreSyncMigration = async () => {
+  try {
+    // 1. Add 'work_completed' to the ENUM if it's missing (Postgres specific)
+    await sequelize.query("ALTER TYPE \"enum_Jobs_status\" ADD VALUE IF NOT EXISTS 'work_completed' AFTER 'in_progress'");
+
+    // 2. Migrate existing 'finished' jobs to 'work_completed'
+    await sequelize.query("UPDATE \"Jobs\" SET status = 'work_completed' WHERE status = 'finished'");
+
+    console.log('✅ Pre-sync migration completed')
+  } catch (err) {
+    // Ignore errors about duplicate values or missing tables
+    console.warn('⚠️ Pre-sync migration notice:', err.message)
+  }
+}
+
+runPreSyncMigration().then(() => {
+  sequelize.sync({ alter: true }).then(() => {
+    console.log('✅ Database Synchronized')
+  }).catch(err => console.error('❌ Database Sync Failed:', err))
+})
 
 // Register API Route Files
 const authRoutes = require('./routes/auth')

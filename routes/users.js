@@ -63,7 +63,7 @@ router.put('/profile', auth, profileUpdateRules, validate, async (req, res) => {
 router.get('/profile', auth, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id, {
-      attributes: ['id', 'name', 'phone', 'city', 'user_type', 'is_verified', 'photo_url', 'homeowner_avg_rating', 'homeowner_review_count']
+      attributes: ['id', 'name', 'phone', 'city', 'address', 'user_type', 'is_verified', 'photo_url', 'homeowner_avg_rating', 'homeowner_review_count']
     })
 
     let techProfile = null
@@ -73,7 +73,30 @@ router.get('/profile', auth, async (req, res) => {
       })
     }
 
-    res.json({ success: true, user, techProfile })
+    // Calculate Job Stats for Profile Screen
+    const isHomeowner = req.user.user_type === 'homeowner'
+    const userFilter = isHomeowner ? { homeowner_id: req.user.id } : { technician_id: req.user.id }
+
+    const activeJobs = await Job.count({
+      where: {
+        ...userFilter,
+        status: { [require('sequelize').Op.in]: ['open', 'matched', 'in_progress', 'work_completed'] }
+      }
+    })
+
+    const completedJobs = await Job.count({
+      where: {
+        ...userFilter,
+        status: 'done'
+      }
+    })
+
+    res.json({
+      success: true,
+      user,
+      techProfile,
+      stats: { activeJobs, completedJobs }
+    })
 
   } catch (error) {
     console.log('Get profile error:', error)

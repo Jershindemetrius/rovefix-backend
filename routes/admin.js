@@ -16,10 +16,10 @@ router.get('/dashboard', adminAuth, async (req, res) => {
       totalTechnicians: await User.count({ where: { user_type: 'technician' } }),
       pendingApprovals: await TechnicianProfile.count({ where: { approved: false } }),
       totalJobs: await Job.count(),
-      activeJobs: await Job.count({ where: { status: ['matched', 'in_progress'] } }),
+      activeJobs: await Job.count({ where: { status: ['open', 'matched', 'in_progress', 'work_completed'] } }),
       completedJobs: await Job.count({ where: { status: 'done' } }),
       disputedJobs: await Job.count({ where: { status: 'disputed' } }),
-      emergencyJobs: await Job.count({ where: { is_emergency: true, status: ['open', 'matched', 'in_progress'] } }),
+      emergencyJobs: await Job.count({ where: { is_emergency: true, status: ['open', 'matched', 'in_progress', 'work_completed'] } }),
       newUsersToday: await User.count({ where: { createdAt: { [Op.gte]: today } } }),
 
       // Calculate Total Revenue
