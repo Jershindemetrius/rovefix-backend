@@ -97,7 +97,11 @@ router.get('/job/:job_id', auth, async (req, res) => {
       include: [{
         model: User,
         as: 'technician',
-        attributes: ['id', 'name', 'phone', 'city', 'is_verified']
+        attributes: ['id', 'name', 'phone', 'city', 'is_verified'],
+        include: [{
+          model: TechnicianProfile,
+          attributes: ['avg_rating', 'total_jobs']
+        }]
       }],
       order: [['price', 'ASC']] // Show cheapest first
     })

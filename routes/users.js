@@ -4,6 +4,7 @@ const auth = require('../middleware/auth')
 const User = require('../models/User')
 const TechnicianProfile = require('../models/TechnicianProfile')
 const Job = require('../models/Job')
+const { Op } = require('sequelize')
 const Review = require('../models/Review')
 const HomeownerReview = require('../models/HomeownerReview')
 const Notification = require('../models/Notification')
@@ -80,7 +81,7 @@ router.get('/profile', auth, async (req, res) => {
     const activeJobs = await Job.count({
       where: {
         ...userFilter,
-        status: { [require('sequelize').Op.in]: ['open', 'matched', 'in_progress', 'work_completed'] }
+        status: { [Op.in]: ['open', 'matched', 'in_progress', 'work_completed'] }
       }
     })
 

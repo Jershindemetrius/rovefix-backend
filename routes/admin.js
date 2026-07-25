@@ -14,7 +14,12 @@ router.get('/dashboard', adminAuth, async (req, res) => {
     const stats = {
       totalUsers: await User.count({ where: { user_type: 'homeowner' } }),
       totalTechnicians: await User.count({ where: { user_type: 'technician' } }),
-      pendingApprovals: await TechnicianProfile.count({ where: { approved: false } }),
+      pendingApprovals: await TechnicianProfile.count({
+        where: {
+          approved: false,
+          id_doc_url: { [Op.ne]: null }
+        }
+      }),
       totalJobs: await Job.count(),
       activeJobs: await Job.count({ where: { status: ['open', 'matched', 'in_progress', 'work_completed'] } }),
       completedJobs: await Job.count({ where: { status: 'done' } }),
