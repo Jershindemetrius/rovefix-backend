@@ -3,7 +3,7 @@ const router = express.Router()
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 const firebaseAdmin = require('../firebase-admin')
-const User = require('../models/User')
+const { User, TechnicianProfile } = require('../models/associations')
 const { generateReferralCode } = require('../utils/referral')
 const { registerRules, validate } = require('../middleware/validator')
 const { Op } = require('sequelize')
@@ -72,6 +72,18 @@ router.post('/register', registerRules, validate, async (req, res) => {
         referral_code: generateReferralCode(name || 'RV'),
         referred_by: referredByUserId,
         is_verified: false // Must be verified by admin if technician
+      })
+    }
+
+    if (user.user_type === 'technician') {
+      await TechnicianProfile.findOrCreate({
+        where: { user_id: user.id },
+        defaults: {
+          user_id: user.id,
+          category: 'electrician',
+          approved: false,
+          is_online: true
+        }
       })
     }
 

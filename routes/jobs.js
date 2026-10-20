@@ -5,7 +5,7 @@ const express = require('express')
 const router = express.Router()
 const auth = require('../middleware/auth')  // protects routes — must be logged in
 const reviewCheck = require('../middleware/reviewCheck')
-const { Job, User, TechnicianProfile, JobInvitation } = require('../models/associations')
+const { Job, User, TechnicianProfile, JobInvitation, Bid, Message, Review, HomeownerReview } = require('../models/associations')
 const { sendNotification } = require('../utils/notifications')
 const { postJobRules, validate } = require('../middleware/validator')
 
@@ -109,7 +109,7 @@ router.get('/open', auth, async (req, res) => {
       include: [{
         model: User,
         as: 'homeowner',
-        attributes: ['name', 'city', 'homeowner_avg_rating']
+        attributes: ['id', 'name', 'phone', 'city', 'photo_url', 'homeowner_avg_rating']
       }]
     })
 
@@ -138,19 +138,26 @@ router.get('/my', auth, async (req, res) => {
     const offset = parseInt(req.query.offset) || 0
     let jobs
 
+    const userInclude = [
+      { model: User, as: 'homeowner', attributes: ['id', 'name', 'phone', 'city', 'photo_url'] },
+      { model: User, as: 'technician', attributes: ['id', 'name', 'phone', 'city', 'photo_url', 'is_verified'] }
+    ]
+
     if (req.user.user_type === 'homeowner') {
       jobs = await Job.findAll({
         where: { homeowner_id: req.user.id },
         order: [['createdAt', 'DESC']],
         limit,
-        offset
+        offset,
+        include: userInclude
       })
     } else {
       jobs = await Job.findAll({
         where: { technician_id: req.user.id },
         order: [['createdAt', 'DESC']],
         limit,
-        offset
+        offset,
+        include: userInclude
       })
     }
 
@@ -168,8 +175,8 @@ router.get('/:id', auth, async (req, res) => {
   try {
     const job = await Job.findByPk(req.params.id, {
       include: [
-        { model: User, as: 'homeowner', attributes: ['name', 'city'] },
-        { model: User, as: 'technician', attributes: ['name', 'city', 'is_verified'] }
+        { model: User, as: 'homeowner', attributes: ['id', 'name', 'phone', 'city', 'photo_url'] },
+        { model: User, as: 'technician', attributes: ['id', 'name', 'phone', 'city', 'photo_url', 'is_verified'] }
       ]
     })
     if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
@@ -539,6 +546,13 @@ router.delete('/:id', auth, async (req, res) => {
     if (reason) {
       await job.update({ cancellation_reason: reason })
     }
+
+    // Clean up child records to prevent foreign key constraint violations
+    await Bid.destroy({ where: { job_id: job.id } })
+    await Message.destroy({ where: { job_id: job.id } })
+    await JobInvitation.destroy({ where: { job_id: job.id } })
+    await Review.destroy({ where: { job_id: job.id } })
+    await HomeownerReview.destroy({ where: { job_id: job.id } })
 
     await job.destroy()
     res.json({ success: true, message: 'Job cancelled and removed' })

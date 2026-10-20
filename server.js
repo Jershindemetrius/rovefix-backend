@@ -23,6 +23,7 @@ app.get('/privacy', (req, res) => res.sendFile(path.join(__dirname, 'public', 'p
 app.get('/terms', (req, res) => res.sendFile(path.join(__dirname, 'public', 'terms.html')))
 app.get('/about', (req, res) => res.sendFile(path.join(__dirname, 'public', 'about.html')))
 app.get('/safety', (req, res) => res.sendFile(path.join(__dirname, 'public', 'safety.html')))
+app.get('/guide', (req, res) => res.sendFile(path.join(__dirname, 'public', 'guide.html')))
 
 // APK Download Route
 app.get('/download-app', (req, res) => {

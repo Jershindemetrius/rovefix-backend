@@ -75,7 +75,7 @@ router.get('/my', auth, async (req, res) => {
     }
     const bids = await Bid.findAll({
       where: { technician_id: req.user.id, status: 'pending' },
-      include: [{ model: Job, attributes: ['category', 'description', 'status'] }]
+      include: [{ model: Job, attributes: ['id', 'category', 'description', 'status', 'location', 'price'] }]
     })
     res.json({ success: true, bids })
   } catch (error) {

@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const adminAuth = require('../middleware/adminAuth')
-const { User, Job, TechnicianProfile, Review, Report, SupportTicket } = require('../models/associations')
+const { User, Job, TechnicianProfile, Review, Report, SupportTicket, Bid, Message, JobInvitation, HomeownerReview, Notification } = require('../models/associations')
 const { Op } = require('sequelize')
 const sequelize = require('../database')
 
@@ -222,6 +222,12 @@ router.put('/jobs/:id/cancel', adminAuth, async (req, res) => {
     const job = await Job.findByPk(req.params.id)
     if (!job) return res.status(404).json({ success: false, message: 'Job not found' })
 
+    await Bid.destroy({ where: { job_id: job.id } })
+    await Message.destroy({ where: { job_id: job.id } })
+    await JobInvitation.destroy({ where: { job_id: job.id } })
+    await Review.destroy({ where: { job_id: job.id } })
+    await HomeownerReview.destroy({ where: { job_id: job.id } })
+
     await job.destroy()
     res.json({ success: true, message: 'Job forcibly CANCELLED/REMOVED' })
   } catch (error) {
@@ -247,7 +253,22 @@ router.delete('/users/:id', adminAuth, async (req, res) => {
 
     // Cleanup associated data
     await TechnicianProfile.destroy({ where: { user_id: user.id } })
-    await Job.destroy({ where: { [Op.or]: [{ homeowner_id: user.id }, { technician_id: user.id }] } })
+
+    const userJobs = await Job.findAll({ where: { [Op.or]: [{ homeowner_id: user.id }, { technician_id: user.id }] } })
+    for (const j of userJobs) {
+      await Bid.destroy({ where: { job_id: j.id } })
+      await Message.destroy({ where: { job_id: j.id } })
+      await JobInvitation.destroy({ where: { job_id: j.id } })
+      await Review.destroy({ where: { job_id: j.id } })
+      await HomeownerReview.destroy({ where: { job_id: j.id } })
+      await j.destroy()
+    }
+
+    await Bid.destroy({ where: { technician_id: user.id } })
+    await Message.destroy({ where: { sender_id: user.id } })
+    await SupportTicket.destroy({ where: { user_id: user.id } })
+    await Notification.destroy({ where: { user_id: user.id } })
+    await Report.destroy({ where: { [Op.or]: [{ reporter_id: user.id }, { reported_id: user.id }] } })
 
     await user.destroy()
     res.json({ success: true, message: 'User and all associated data removed' })
