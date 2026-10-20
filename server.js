@@ -179,3 +179,11 @@ const server = app.listen(PORT, () => {
 // High-Performance connection settings
 server.keepAliveTimeout = 120000;
 server.headersTimeout = 125000;
+
+// ⚡ Keep-Alive Self-Ping Worker (Keeps Render free tier instance warm 24/7)
+const https = require('https');
+setInterval(() => {
+  https.get('https://rovefix-backend.onrender.com/health', (res) => {
+    // Keep Render instance awake and response times in milliseconds
+  }).on('error', () => {});
+}, 10 * 60 * 1000); // Ping every 10 minutes

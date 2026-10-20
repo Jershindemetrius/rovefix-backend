@@ -8,7 +8,15 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
     ssl: {
       require: true,                // Neon.tech requires SSL (secure connection)
       rejectUnauthorized: false     // needed for Neon specifically
-    }
+    },
+    statement_timeout: 5000,
+    idle_in_transaction_session_timeout: 10000
+  },
+  pool: {
+    max: 10,
+    min: 2,
+    acquire: 30000,
+    idle: 10000
   },
   logging: false  // set to true if you want to see database queries in the console
 })
