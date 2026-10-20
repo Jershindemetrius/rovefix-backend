@@ -93,10 +93,12 @@ router.post('/register', registerRules, validate, async (req, res) => {
       { expiresIn: '30d' }
     )
 
+    const isProfileComplete = user.is_profile_complete || (!!user.name && user.name !== 'User' && !!user.city)
+
     res.json({
       success: true,
       token,
-      is_profile_complete: user.is_profile_complete,
+      is_profile_complete: isProfileComplete,
       user: {
         id: user.id,
         name: user.name,
@@ -192,10 +194,12 @@ router.post('/login', async (req, res) => {
       { expiresIn: '30d' }
     )
 
+    const isProfileComplete = user.is_profile_complete || (!!user.name && user.name !== 'User' && !!user.city)
+
     res.json({
       success: true,
       token,
-      is_profile_complete: user.is_profile_complete,
+      is_profile_complete: isProfileComplete,
       user: {
         id: user.id,
         name: user.name,

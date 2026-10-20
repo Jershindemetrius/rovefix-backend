@@ -66,12 +66,14 @@ router.post('/:job_id', auth, placeBidRules, validate, async (req, res) => {
   }
 })
 
+const isUuid = (str) => typeof str === 'string' && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str)
+
 // GET /bids/my
 // Technician sees their own pending bids
 router.get('/my', auth, async (req, res) => {
   try {
-    if (req.user.user_type !== 'technician') {
-        return res.status(403).json({ success: false, message: 'Only technicians have bids' })
+    if (!isUuid(req.user.id) || req.user.user_type !== 'technician') {
+        return res.json({ success: true, bids: [] })
     }
     const bids = await Bid.findAll({
       where: { technician_id: req.user.id, status: 'pending' },

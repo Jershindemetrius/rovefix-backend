@@ -130,10 +130,15 @@ router.get('/open', auth, async (req, res) => {
   }
 })
 
+const isUuid = (str) => typeof str === 'string' && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str)
+
 // GET /jobs/my
 // User sees their own jobs (homeowner sees jobs they posted, technician sees jobs they accepted)
 router.get('/my', auth, async (req, res) => {
   try {
+    if (!isUuid(req.user.id)) {
+      return res.json({ success: true, jobs: [] })
+    }
     const limit = parseInt(req.query.limit) || 20
     const offset = parseInt(req.query.offset) || 0
     let jobs
